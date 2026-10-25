@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RustBus mixer — design reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0C0F; --topbar:#0D0F13; --section:#111419; --card:#171B21; --well:#12151A; --sunken:#0F1216;
+  --border:#232830; --border-ctl:#262B33; --border-hover:#3A424D; --divider:#1A1E24;
+  --text:#EEF1F4; --text-2:#AEB6C2; --text-3:#8B93A1;
+  --accent-a:#5EEAD4; --on-a:#06201C; --accent-b:#A78BFA; --on-b:#170C33;
+  --amber:#FBBF24; --on-amber:#2A1B00; --red:#F87171; --on-red:#2B0606;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+button{font-family:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent-a);outline-offset:2px}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding:12px 24px;border-bottom:1px solid var(--divider);background:var(--topbar)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand b{font-size:17px;letter-spacing:-.01em}
+.brand span{font-size:12px;color:var(--text-3)}
+.ghost{height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border-ctl);background:#14171C;color:#D5DAE1;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:8px}
+.ghost:hover{background:#1B1F26}
+.status{display:flex;align-items:center;gap:10px;height:32px;padding:0 12px;border-radius:8px;background:#0F1A18;border:1px solid #16332E;font-size:12px;color:var(--text-2)}
+.status i{width:7px;height:7px;border-radius:50%;background:var(--accent-a);box-shadow:0 0 0 3px rgba(94,234,212,.18)}
+.status .rate{font-family:var(--mono);color:var(--accent-a);font-weight:600}
+.hwout{display:flex;align-items:center;gap:6px;margin-left:auto;flex-wrap:wrap}
+.pill{height:32px;padding:0 10px 0 8px;border-radius:8px;border:1px solid var(--border-ctl);background:#14171C;color:#D5DAE1;font-size:12px;display:inline-flex;align-items:center;gap:8px;max-width:240px}
+.pill b{font-family:var(--mono);font-size:11px;color:var(--bg);background:var(--accent-a);border-radius:5px;padding:2px 5px}
+.pill b.off{background:var(--border-ctl);color:#9AA3B0}
+.pill span,.select span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+main{overflow-x:auto;padding:20px 24px 24px}
+.row{display:flex;gap:16px;align-items:flex-start;width:max-content}
+.section{background:var(--section);border:1px solid #1E232A;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.sec-head{display:flex;align-items:center;gap:10px}
+.sec-head h2{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin:0}
+.count{font-family:var(--mono);font-size:11px;color:var(--text-3);background:#1A1E24;border-radius:6px;padding:2px 6px}
+.strips{display:flex;gap:10px;align-items:stretch}
+.strip{width:148px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:12px}
+.strip.bus{width:124px}
+.strip.idle .name{color:var(--text-3)}
+.strip.muted .fill{opacity:.25}
+.head{display:flex;align-items:center;gap:8px;min-height:20px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kind{margin-top:-6px}
+.select{width:100%;height:30px;border-radius:8px;border:1px solid var(--border-ctl);background:var(--well);color:var(--text-2);font-size:11px;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 8px;text-align:left}
+.select:hover{border-color:#353C46}
+.knobs{display:flex;justify-content:space-between;gap:4px}
+.knob{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+.knob span{font-size:10px;color:var(--text-3)}
+.pad-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.seg{display:flex;background:var(--well);border:1px solid var(--border);border-radius:6px;padding:2px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--text-3);font-size:9px;font-weight:600;padding:2px 5px;border-radius:4px}
+.seg button.active{background:var(--border-ctl);color:var(--text)}
+.pad{position:relative;height:76px;border-radius:8px;background:var(--sunken);border:1px solid var(--border);overflow:hidden}
+.pad:before{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:#1F242B}
+.pad:after{content:'';position:absolute;top:0;bottom:0;left:50%;width:1px;background:#1F242B}
+.puck{position:absolute;z-index:1;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--text);box-shadow:0 0 0 4px rgba(238,241,244,.12)}
+.routes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.chip{height:26px;border-radius:6px;border:1px solid var(--border-ctl);background:var(--well);color:var(--text-3);font-family:var(--mono);font-size:11px;font-weight:600}
+.chip:hover{border-color:var(--border-hover);color:#C9D0D9}
+.chip.on-a{background:var(--accent-a);border-color:var(--accent-a);color:var(--on-a)}
+.chip.on-b{background:var(--accent-b);border-color:var(--accent-b);color:var(--on-b)}
+.fader-row{display:flex;gap:8px;align-items:stretch;margin-top:auto}
+.meter{display:flex;gap:2px;height:180px}
+.bus .meter{height:236px}
+.bar{position:relative;width:5px;border-radius:3px;background:var(--sunken);overflow:hidden}
+.fill{position:absolute;left:0;right:0;bottom:0;border-radius:3px;background:linear-gradient(to top,var(--accent-a) 0,var(--accent-a) 68%,var(--amber) 84%,var(--red) 100%);background-size:100% 180px;background-position:bottom}
+.bus .fill{background-size:100% 236px}
+.fader{position:relative;width:24px}
+.fader .track{position:absolute;left:50%;top:6px;bottom:6px;width:4px;margin-left:-2px;border-radius:2px;background:var(--sunken)}
+.thumb{position:absolute;left:0;width:24px;height:12px;margin-bottom:-6px;border-radius:4px;background:#E7EAEE;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.thumb:after{content:'';position:absolute;left:5px;right:5px;top:5px;height:2px;background:var(--bg);border-radius:1px}
+.side{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+.db{font-family:var(--mono);font-size:13px;font-weight:600;padding:2px 0 4px}
+.db small{font-size:10px;color:var(--text-3);font-weight:500}
+.btn{height:28px;border-radius:7px;border:1px solid var(--border-ctl);background:var(--well);color:var(--text-2);font-size:11px;font-weight:600;padding:0}
+.btn:hover{border-color:var(--border-hover);color:var(--text)}
+.btn.on-mono,.btn.on-solo{background:var(--amber);border-color:var(--amber);color:var(--on-amber)}
+.btn.on-mute{background:var(--red);border-color:var(--red);color:var(--on-red)}
+.btn.on-eq{background:var(--accent-a);border-color:var(--accent-a);color:var(--on-a)}
+.bus-btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.bus-btns .btn{font-size:10px;display:flex;align-items:center;justify-content:center}
+.player{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.transport{display:flex;gap:6px}
+.tbtn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border-ctl);background:var(--well);color:#C9D0D9;display:inline-flex;align-items:center;justify-content:center}
+.tbtn:hover{background:#1B1F26}
+.tbtn.play{background:var(--text);border-color:var(--text);color:var(--bg)}
+.rec{height:36px;padding:0 12px;border-radius:9px;border:1px solid #3A2326;background:#1C1416;color:#FCA5A5;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+.rec.on{background:var(--red);border-color:var(--red);color:var(--on-red)}
+.rec i{width:8px;height:8px;border-radius:50%;background:currentColor}
+.progress{display:flex;flex-direction:column;gap:6px;flex:1;min-width:200px}
+.progress div:first-child{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--text-2)}
+.progress .time{font-family:var(--mono);color:var(--text-3)}
+.progress .line{height:4px;border-radius:2px;background:var(--sunken)}
+.player-right{display:flex;align-items:center;gap:12px}
+.player-right .routes{grid-template-columns:repeat(6,minmax(0,1fr));width:228px}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#5EEAD4"/><path d="M8 18v-4M12 20V8M16 17v-6M20 19v-8" stroke="#06201C" stroke-width="2.2" stroke-linecap="round"/></svg>
+    <b>RustBus</b><span>Virtual audio mixer</span>
+  </div>
+  <div style="display:flex;gap:6px;margin-left:8px">
+    <button class="ghost" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menu</button>
+    <button class="ghost" type="button">VBAN</button>
+  </div>
+  <div class="status"><i></i><span class="rate">48 kHz</span><span style="color:#3A424D">|</span><span>Clock · A1 Speakers (Scarlett 2i2 USB)</span></div>
+  <div class="hwout">
+    <span class="mini" style="margin-right:4px">Hardware out</span>
+    <button class="pill" type="button"><b>A1</b><span>Speakers · Scarlett 2i2 USB</span></button>
+    <button class="pill" type="button"><b class="off">A2</b><span>Not assigned</span></button>
+    <button class="pill" type="button"><b class="off">A3</b><span>Not assigned</span></button>
+  </div>
+</header>
+
+<main>
+  <div class="row">
+    <section class="section"><div class="sec-head"><h2>Hardware inputs</h2><span class="count">3</span></div><div class="strips" id="hw"></div></section>
+    <section class="section"><div class="sec-head"><h2>Virtual inputs</h2><span class="count">3</span></div><div class="strips" id="virt"></div></section>
+    <section class="section">
+      <div class="sec-head"><h2>Master</h2><span class="count">6 buses</span></div>
+      <div class="player">
+        <div class="transport">
+          <button class="tbtn" type="button" aria-label="Previous"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 5 9 12l10 7V5zM5 5v14"/></svg></button>
+          <button class="tbtn play" type="button" aria-label="Play" id="play"></button>
+          <button class="tbtn" type="button" aria-label="Stop"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+          <button class="tbtn" type="button" aria-label="Next"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 5 10 7-10 7V5zM19 5v14"/></svg></button>
+          <button class="rec" type="button" aria-pressed="false" id="rec"><i></i>Rec</button>
+        </div>
+        <div class="progress"><div><span>Drop an audio file to play, or press Rec</span><span class="time">00:00 / 00:00</span></div><div class="line"></div></div>
+        <div class="player-right"><div class="routes" id="player-routes"></div><div class="knob" style="flex:none" id="gain"></div></div>
+      </div>
+      <div class="strips" id="buses"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+// ---- Data model (mirrors what the Rust backend would expose) ----
+const BUSES = ['A1','A2','A3','B1','B2','B3'];
+const state = {
+  hw: [
+    { id:'mic', name:'Mic', color:'#5EEAD4', device:'Microphone · Scarlett 2i2', knobs:[['Comp',.18],['Gate',.12]], routes:['B1'], mL:34, mR:34, db:0, pan:[50,50], mono:true },
+    { id:'hw2', name:'Hardware Input 2', color:'#3A424D', device:'No device', idle:true, knobs:[['Comp',0],['Gate',0]], routes:[], db:0, pan:[50,50] },
+    { id:'hw3', name:'Hardware Input 3', color:'#3A424D', device:'No device', idle:true, knobs:[['Comp',0],['Gate',0]], routes:[], db:0, pan:[50,50] },
+  ],
+  virt: [
+    { id:'pc', name:'PC Sound', color:'#A78BFA', device:'Line 1 · Virtual Audio Cable', knobs:[['Treble',.5],['Mid',.5],['Bass',.5]], routes:['A1'], db:0, pan:[50,50], extra:'M.C.' },
+    { id:'brave', name:'Brave', color:'#F59E0B', device:'Line 2 · Virtual Audio Cable', knobs:[['Treble',.5],['Mid',.5],['Bass',.5]], routes:['A1'], mL:46, mR:40, db:0, pan:[50,50], extra:'K' },
+    { id:'discord', name:'Discord', color:'#818CF8', device:'Line 3 · Virtual Audio Cable', knobs:[['Treble',.5],['Mid',.5],['Bass',.5]], routes:['A1'], db:0, pan:[50,50] },
+  ],
+  buses: [
+    { id:'a1', name:'A1', kind:'Physical', color:'#5EEAD4', device:'Speakers · Scarlett 2i2', mL:52, mR:47, db:0 },
+    { id:'a2', name:'A2', kind:'Physical', color:'#3A424D', device:'Not assigned', idle:true, db:0 },
+    { id:'a3', name:'A3', kind:'Physical', color:'#3A424D', device:'Not assigned', idle:true, db:0 },
+    { id:'b1', name:'Discord Mic', kind:'Virtual', color:'#A78BFA', device:'Line 4 · Virtual Audio Cable', db:0 },
+    { id:'b2', name:'In Game', kind:'Virtual', color:'#A78BFA', device:'Line 5 · Virtual Audio Cable', db:0 },
+    { id:'b3', name:'B3', kind:'Virtual', color:'#A78BFA', device:'Line 6 · Virtual Audio Cable', db:0 },
+  ],
+  player: { routes:['A1'], playing:false, rec:false, gain:.5 },
+};
+
+// ---- Helpers ----
+const chev = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+const fmtDb = d => (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(1);
+const faderPct = d => ((d + 60) / 72 * 100).toFixed(1);   // fader range −60 … +12 dB
+function knob(label, v, color, size) {
+  // 270° sweep; circumference of r=15 is 94.25, 3/4 of it is 70.7
+  return `<div class="knob"><svg width="${size}" height="${size}" viewBox="0 0 40 40" aria-hidden="true">
+    <circle cx="20" cy="20" r="15" fill="none" stroke="#262B33" stroke-width="3" stroke-linecap="round" stroke-dasharray="70.7 94.3" transform="rotate(135 20 20)"/>
+    <circle cx="20" cy="20" r="15" fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-dasharray="${(70.7*v).toFixed(1)} 94.3" transform="rotate(135 20 20)"/>
+    <circle cx="20" cy="20" r="10" fill="#222830"/>
+    <line x1="20" y1="20" x2="20" y2="12.5" stroke="#EEF1F4" stroke-width="2" stroke-linecap="round" transform="rotate(${-135 + 270*v} 20 20)"/>
+  </svg><span>${label}</span></div>`;
+}
+function routes(s, path) {
+  return BUSES.map(b => {
+    const on = s.routes.includes(b);
+    return `<button type="button" class="chip${on ? (b[0]==='A' ? ' on-a' : ' on-b') : ''}" aria-pressed="${on}" data-route="${path}|${b}">${b}</button>`;
+  }).join('');
+}
+const flagBtn = (s, path, f, label, cls, aria) =>
+  `<button type="button" class="btn${s[f] ? ' ' + cls : ''}" aria-pressed="${!!s[f]}"${aria ? ` aria-label="${aria}"` : ''} data-flag="${path}|${f}">${label}</button>`;
+const meter = s => `<div class="meter" aria-hidden="true"><div class="bar"><div class="fill" style="height:${s.mL||0}%"></div></div><div class="bar"><div class="fill" style="height:${s.mR||0}%"></div></div></div>`;
+const fader = s => `<div class="fader"><div class="track"></div><div class="thumb" style="bottom:${faderPct(s.db)}%"></div></div>`;
+const cls = s => 'strip' + (s.idle ? ' idle' : '') + (s.mute ? ' muted' : '');
+
+function inputStrip(s, path, isHw) {
+  const accent = isHw ? '#5EEAD4' : '#A78BFA';
+  return `<div class="${cls(s)}">
+    <div class="head"><span class="dot" style="background:${s.color}"></span><span class="name">${s.name}</span></div>
+    <button class="select" type="button"><span>${s.device}</span>${chev}</button>
+    <div class="knobs">${s.knobs.map(k => knob(k[0], k[1], accent, isHw ? 40 : 36)).join('')}</div>
+    <div>
+      <div class="pad-top"><span class="mini">Pan</span>${isHw
+        ? '<div class="seg"><button type="button">Color</button><button type="button" class="active">3D</button><button type="button">FX</button></div>'
+        : '<span class="mini" style="color:#5C6573">Stereo</span>'}</div>
+      <div class="pad"><div class="puck" style="left:${s.pan[0]}%;top:${s.pan[1]}%;${isHw ? '' : 'background:#C4B5FD'}"></div></div>
+    </div>
+    <div class="routes">${routes(s, path)}</div>
+    <div class="fader-row">${meter(s)}${fader(s)}
+      <div class="side">
+        <div class="db">${fmtDb(s.db)}<small> dB</small></div>
+        ${flagBtn(s, path, 'mono', 'Mono', 'on-mono')}
+        ${flagBtn(s, path, 'solo', 'Solo', 'on-solo')}
+        ${flagBtn(s, path, 'mute', 'Mute', 'on-mute')}
+        ${s.extra ? `<button type="button" class="btn">${s.extra}</button>` : ''}
+      </div>
+    </div>
+  </div>`;
+}
+const muteIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5zM22 9l-6 6M16 9l6 6"/></svg>';
+function busStrip(s, path) {
+  return `<div class="${cls(s)} bus">
+    <div class="head"><span class="dot" style="background:${s.color}"></span><span class="name">${s.name}</span></div>
+    <div class="mini kind">${s.kind}</div>
+    <button class="select" type="button"><span>${s.device}</span>${chev}</button>
+    <button class="select" type="button"><span>Mode · Normal</span>${chev}</button>
+    <div class="fader-row">${meter(s)}${fader(s)}</div>
+    <div class="db" style="padding:0">${fmtDb(s.db)}<small> dB</small></div>
+    <div class="bus-btns">
+      ${flagBtn(s, path, 'mono', 'M', 'on-mono', 'Mono')}
+      ${flagBtn(s, path, 'eq', 'EQ', 'on-eq')}
+      ${flagBtn(s, path, 'mute', muteIcon, 'on-mute', 'Mute')}
+    </div>
+  </div>`;
+}
+
+// ---- Render ----
+function render() {
+  document.getElementById('hw').innerHTML = state.hw.map((s,i) => inputStrip(s, 'hw.'+i, true)).join('');
+  document.getElementById('virt').innerHTML = state.virt.map((s,i) => inputStrip(s, 'virt.'+i, false)).join('');
+  document.getElementById('buses').innerHTML = state.buses.map((s,i) => busStrip(s, 'buses.'+i)).join('');
+  document.getElementById('player-routes').innerHTML = routes(state.player, 'player');
+  document.getElementById('gain').innerHTML = knob('Gain', state.player.gain, '#5EEAD4', 36);
+  const play = document.getElementById('play');
+  play.setAttribute('aria-label', state.player.playing ? 'Pause' : 'Play');
+  play.innerHTML = state.player.playing
+    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>';
+  const rec = document.getElementById('rec');
+  rec.classList.toggle('on', state.player.rec);
+  rec.setAttribute('aria-pressed', state.player.rec);
+}
+const resolve = path => path === 'player' ? state.player : (([g,i]) => state[g][+i])(path.split('.'));
+document.addEventListener('click', e => {
+  const r = e.target.closest('[data-route]');
+  if (r) { const [p,b] = r.dataset.route.split('|'); const s = resolve(p);
+    s.routes = s.routes.includes(b) ? s.routes.filter(x => x !== b) : [...s.routes, b]; render(); return; }
+  const f = e.target.closest('[data-flag]');
+  if (f) { const [p,k] = f.dataset.flag.split('|'); const s = resolve(p); s[k] = !s[k]; render(); return; }
+  if (e.target.closest('#play')) { state.player.playing = !state.player.playing; render(); }
+  if (e.target.closest('#rec')) { state.player.rec = !state.player.rec; render(); }
+});
+render();
+</script>
+</body>
+</html>

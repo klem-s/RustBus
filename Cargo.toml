@@ -1,0 +1,36 @@
+[package]
+name = "rustbus"
+version = "0.1.0"
+edition = "2021"
+description = "RustBus — a virtual audio mixer written in Rust (clean-room, Voicemeeter-Banana-style behaviour)"
+license = "MIT"
+
+[[bin]]
+name = "rustbus"
+path = "src/main.rs"
+
+[lib]
+name = "rustbus"
+path = "src/lib.rs"
+
+[dependencies]
+eframe = { version = "0.29", default-features = false, features = ["default_fonts", "glow"] }
+cpal = "0.15"
+midir = "0.10"
+hound = "3.5"
+roxmltree = "0.20"
+rfd = "0.15"
+dirs = "5"
+parking_lot = "0.12"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+anyhow = "1"
+nnnoiseless = { version = "0.5", default-features = false }
+tray-icon = { version = "0.19", default-features = false }
+raw-window-handle = "0.6"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+
+[profile.dev]
+opt-level = 1
