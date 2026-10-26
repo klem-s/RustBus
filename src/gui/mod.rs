@@ -210,7 +210,7 @@ impl App {
             e.stop();
         }
         self.settings.params = *self.shared.params.lock();
-        self.engine = Some(Engine::start(&self.settings, &self.shared, self.text_tx.clone(), self.wake.clone()));
+        self.engine = Some(Engine::start(&self.settings.device, &self.settings.vban, &self.shared, self.text_tx.clone(), self.wake.clone()));
         let st = self.shared.status.lock();
         for e in &st.errors {
             self.console_log.push(format!("[engine] {}", e.replace('\n', " ")));

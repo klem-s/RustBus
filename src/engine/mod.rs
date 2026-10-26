@@ -22,8 +22,8 @@ use cpal::{FromSample, SizedSample};
 use parking_lot::Mutex;
 
 use crate::params::*;
-use crate::settings::{Settings, DEV_ASIO};
-use crate::vban::{InSink, OutSource, VbanRuntime, VbanStats};
+use crate::settings::{DeviceConfig, DEV_ASIO};
+use crate::vban::{InSink, OutSource, VbanConfig, VbanRuntime, VbanStats};
 use mixer::{Meters, Mixer, MAX_BLOCK};
 use ring::{ring, AdaptiveReader, Producer};
 use tape::{TapeCore, TapeShared};
@@ -201,15 +201,15 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub fn start(settings: &Settings, shared: &Arc<Shared>, text_tx: Sender<String>, wake: Arc<dyn Fn() + Send + Sync>) -> Engine {
+    pub fn start(device: &DeviceConfig, vban: &VbanConfig, shared: &Arc<Shared>, text_tx: Sender<String>, wake: Arc<dyn Fn() + Send + Sync>) -> Engine {
         let mut status = EngineStatus::default();
         let mut streams = Vec::new();
         shared.device_error.store(false, Ordering::Relaxed);
 
         // ---- master clock: A1 (ASIO driver or WASAPI device)
-        let a1_asio = settings.device.outputs[0].as_ref().filter(|d| d.kind == DEV_ASIO).and_then(|d| {
-            let want_buffer = settings.device.buffer_asio.clamp(0, MAX_BLOCK as i32) as usize;
-            match asio::open(&d.name, settings.device.sr_asio.max(0) as u32, want_buffer) {
+        let a1_asio = device.outputs[0].as_ref().filter(|d| d.kind == DEV_ASIO).and_then(|d| {
+            let want_buffer = device.buffer_asio.clamp(0, MAX_BLOCK as i32) as usize;
+            match asio::open(&d.name, device.sr_asio.max(0) as u32, want_buffer) {
                 Ok(a) if A1_RATES.contains(&a.info.sample_rate) => Some(a),
                 Ok(a) => {
                     status.errors.push(format!(
@@ -224,7 +224,7 @@ impl Engine {
                 }
             }
         });
-        let a1 = settings.device.outputs[0].as_ref().filter(|d| d.kind != DEV_ASIO).and_then(|d| {
+        let a1 = device.outputs[0].as_ref().filter(|d| d.kind != DEV_ASIO).and_then(|d| {
             let dev = find_device(false, &d.name);
             if dev.is_none() {
                 status.errors.push(format!("A1 device not found: {}", d.name));
@@ -249,7 +249,7 @@ impl Engine {
             sr = INTERNAL_SR;
         }
         shared.tape.engine_sr.store(sr, Ordering::Relaxed);
-        let latency = (settings.device.buffer_wdm.clamp(128, 2048) as usize) * 3 / 2;
+        let latency = (device.buffer_wdm.clamp(128, 2048) as usize) * 3 / 2;
 
         let mut core = Core {
             mixer: Mixer::new(sr as f32),
@@ -269,11 +269,11 @@ impl Engine {
 
         // ---- inputs (strips)
         for s in 0..NUM_STRIPS {
-            let Some(d) = &settings.device.inputs[s] else { continue };
+            let Some(d) = &device.inputs[s] else { continue };
             if d.kind == DEV_ASIO {
                 match &a1_asio {
                     Some(a) if a.info.driver == d.name && s < NUM_HW_STRIPS => {
-                        let src = settings.device.asio_patch[s].map(|c| c.max(0) as usize);
+                        let src = device.asio_patch[s].map(|c| c.max(0) as usize);
                         let ins = &a.info.inputs;
                         if src.iter().all(|&c| c < ins.len()) {
                             core.direct.push((s, src));
@@ -304,7 +304,7 @@ impl Engine {
 
         // ---- outputs A2..B2
         for b in 1..NUM_BUSES {
-            let Some(d) = &settings.device.outputs[b] else { continue };
+            let Some(d) = &device.outputs[b] else { continue };
             let Some(dev) = find_device(false, &d.name) else {
                 status.errors.push(format!("Failed to Open Output Device: {}", d.name));
                 continue;
@@ -320,7 +320,7 @@ impl Engine {
         }
 
         // ---- VBAN
-        let vcfg = &settings.vban;
+        let vcfg = vban;
         let mut sinks = Vec::new();
         let mut sources = Vec::new();
         if vcfg.enabled {
@@ -371,7 +371,7 @@ impl Engine {
                     let mut core = slot.lock().take().expect("core still present");
                     core.direct.clear();
                     for s in 0..NUM_HW_STRIPS {
-                        if settings.device.inputs[s].as_ref().is_some_and(|d| d.kind == DEV_ASIO) {
+                        if device.inputs[s].as_ref().is_some_and(|d| d.kind == DEV_ASIO) {
                             status.points[s] = None;
                         }
                     }
@@ -789,7 +789,7 @@ mod golden_tests {
 #[cfg(test)]
 mod golden_status_tests {
     use super::*;
-    use crate::settings::{DeviceRef, DEV_WDM};
+    use crate::settings::{DeviceRef, Settings, DEV_WDM};
 
     // Device names that cannot exist, so no device or driver is ever opened.
     const NO_A1: &str = "RustBus Golden Missing A1";
@@ -800,7 +800,7 @@ mod golden_status_tests {
     fn start(settings: &Settings) -> EngineStatus {
         let shared = Shared::new(MixParams::default());
         let (tx, _rx) = std::sync::mpsc::channel();
-        let mut engine = Engine::start(settings, &shared, tx, Arc::new(|| {}));
+        let mut engine = Engine::start(&settings.device, &settings.vban, &shared, tx, Arc::new(|| {}));
         let st = shared.status.lock().clone();
         engine.stop();
         st

@@ -23,7 +23,7 @@ fn main() {
 
     let shared = Shared::new(s.params);
     let (tx, _rx) = std::sync::mpsc::channel();
-    let mut engine = Engine::start(&s, &shared, tx, std::sync::Arc::new(|| {}));
+    let mut engine = Engine::start(&s.device, &s.vban, &shared, tx, std::sync::Arc::new(|| {}));
     let st = shared.status.lock().clone();
     println!("running={} sr={} master={}", st.running, st.sample_rate, st.master);
     for (i, p) in st.points.iter().enumerate() {
