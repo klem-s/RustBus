@@ -560,7 +560,8 @@ fn asio_process(slot: CoreSlot) -> asio::Process {
     let mut core: Option<Core> = None;
     Box::new(move |ins: &[Vec<f32>], outs: &mut [Vec<f32>], frames: usize| {
         if core.is_none() {
-            core = slot.lock().take();
+            // try_lock: never block the driver thread; if Engine::start still holds the slot, retry next call.
+            core = slot.try_lock().and_then(|mut g| g.take());
         }
         let Some(core) = core.as_mut() else { return };
         for (dst, src) in core.direct_buf.iter_mut().zip(ins) {
@@ -734,7 +735,7 @@ where
         sc,
         move |data: &mut [T], _: &cpal::OutputCallbackInfo| {
             if core.is_none() {
-                core = slot.lock().take();
+                core = slot.try_lock().and_then(|mut g| g.take());
             }
             let Some(core) = core.as_mut() else {
                 data.fill(T::EQUILIBRIUM);
