@@ -268,7 +268,8 @@ enum Master {
     Internal(Arc<AtomicBool>, JoinHandle<()>),
 }
 
-/// Start A1 (or the internal clock when there is none). On failure the Core comes back
+/// Start A1 (or the internal clock when there is none). If A1 cannot be opened, started
+/// or (WASAPI) played, the Core comes back
 /// with the error to report, so the caller can fall back to the internal clock.
 fn start_master(a1: Option<A1>, core: Core, status: &mut EngineStatus, wake: Arc<dyn Fn() + Send + Sync>) -> Result<Master, (String, Core)> {
     let Some(a1) = a1 else { return Ok(internal_clock(core)) };
@@ -302,6 +303,15 @@ fn start_master(a1: Option<A1>, core: Core, status: &mut EngineStatus, wake: Arc
             let dev_ch = cfg.channels() as usize;
             match open_master(&dev, cfg, slot.clone(), shared) {
                 Ok(stream) => {
+                    if let Err(e) = stream.play() {
+                        match take_back_unstarted(&slot, &e) {
+                            Some(back) => {
+                                drop(stream);
+                                return Err(back);
+                            }
+                            None => status.errors.push(format!("Device Not Started: {e}")),
+                        }
+                    }
                     status.master = format!("A1: {name}");
                     status.points[NUM_STRIPS] = Some(format!("WDM: {name} ({sr} Hz, {dev_ch} ch)"));
                     Ok(Master::Wasapi(stream))
@@ -311,6 +321,13 @@ fn start_master(a1: Option<A1>, core: Core, status: &mut EngineStatus, wake: Arc
         }
     };
     started.map_err(|e| (e, slot.lock().take().expect("core still present")))
+}
+
+/// The A1 stream was built but `play()` failed: take the Core back so the caller falls
+/// back to the internal clock. `None` if the callback already took it (the stream did run).
+fn take_back_unstarted(slot: &CoreSlot, e: impl std::fmt::Display) -> Option<(String, Core)> {
+    let core = slot.lock().take()?;
+    Some((format!("Failed to Open Main Output Device (A1)\nDevice Not Started: {e}"), core))
 }
 
 pub struct Engine {
@@ -407,11 +424,6 @@ impl Engine {
                 status.errors.push(format!("Device Not Started: {e}"));
             }
         }
-        if let Master::Wasapi(s) = &master {
-            if let Err(e) = s.play() {
-                status.errors.push(format!("Device Not Started: {e}"));
-            }
-        }
         status.running = true;
         status.sample_rate = sr;
         *shared.status.lock() = status;
@@ -427,13 +439,21 @@ impl Engine {
 
     pub fn stop(&mut self) {
         // Same order as ever: the ASIO driver first, then the WDM streams (A1 last), then the clock.
-        if let Some(Master::Asio(_)) = self.master {
-            self.master = None;
-        }
+        let master = match self.master.take() {
+            Some(Master::Asio(s)) => {
+                drop(s);
+                None
+            }
+            m => m,
+        };
         self.streams.clear();
-        if let Some(Master::Internal(stop, h)) = self.master.take() {
-            stop.store(true, Ordering::Relaxed);
-            let _ = h.join();
+        match master {
+            Some(Master::Wasapi(s)) => drop(s),
+            Some(Master::Internal(stop, h)) => {
+                stop.store(true, Ordering::Relaxed);
+                let _ = h.join();
+            }
+            _ => {}
         }
         if let Some(mut v) = self.vban.take() {
             v.stop();
@@ -1023,5 +1043,57 @@ mod plan_tests {
         let p = plan_a1(&d, &A1Probe::Asio(Err("ASIO driver not installed: Focusrite USB ASIO".into())));
         assert_eq!((p.master, p.sr), (A1Master::Internal, INTERNAL_SR));
         assert_eq!(p.errors, ["Failed to Open Main Output Device (A1)\nASIO driver not installed: Focusrite USB ASIO"]);
+    }
+}
+
+#[cfg(test)]
+mod master_tests {
+    use super::*;
+
+    fn core() -> Core {
+        let shared = Shared::new(MixParams::default());
+        Core {
+            mixer: Mixer::new(INTERNAL_SR as f32),
+            shared: shared.clone(),
+            local: MixParams::default(),
+            inputs: Vec::new(),
+            outputs: Vec::new(),
+            vban_in: Vec::new(),
+            vban_out: Vec::new(),
+            tape: TapeCore::new(shared.tape.clone()),
+            tmp: vec![0.0; MAX_BLOCK * MAX_CH],
+            sr: INTERNAL_SR,
+            direct: Vec::new(),
+            direct_buf: Vec::new(),
+            direct_off: 0,
+        }
+    }
+
+    /// A1 built but play() failed before any callback: the core comes back for the
+    /// internal clock, with an A1 open-failure message.
+    #[test]
+    fn unstarted_master_hands_core_back() {
+        let slot: CoreSlot = Arc::new(Mutex::new(Some(core())));
+        let (msg, core) = take_back_unstarted(&slot, "device busy").expect("core comes back");
+        assert_eq!(msg, "Failed to Open Main Output Device (A1)\nDevice Not Started: device busy");
+        assert_eq!(core.sr, INTERNAL_SR);
+        assert!(slot.lock().is_none());
+    }
+
+    /// If the callback already took the core, the stream keeps it (no fallback).
+    #[test]
+    fn running_master_keeps_core() {
+        let slot: CoreSlot = Arc::new(Mutex::new(None));
+        assert!(take_back_unstarted(&slot, "device busy").is_none());
+    }
+
+    /// The fallback the caller applies: the returned core drives the internal clock.
+    #[test]
+    fn taken_back_core_runs_internal_clock() {
+        let slot: CoreSlot = Arc::new(Mutex::new(Some(core())));
+        let (_, core) = take_back_unstarted(&slot, "x").unwrap();
+        let Master::Internal(stop, h) = internal_clock(core) else { panic!("not internal") };
+        stop.store(true, Ordering::Relaxed);
+        h.join().unwrap();
     }
 }
