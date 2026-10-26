@@ -1,0 +1,1264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<VBAudioVoicemeeterSettings>
+<VoiceMeeterDeviceConfiguration>
+	<OptionDev mme='1024' wdm='256' ks='512' asio='128' srasio='96000' msA1='1.50' msA2='0.00' msA3='20.00' />
+	<InputDev index='1' type='3' name="Microphone (USB Audio)" />
+	<InputDev index='2' name="-" />
+	<InputDev index='3' type='5' name="Focusrite USB ASIO" />
+	<OutputDev index='1' type='5' name="Focusrite USB ASIO" />
+	<OutputDev index='2' type='1' name="Speakers &amp; &lt;Phones&gt;" />
+	<OutputDev index='3' name="-" pOut1='0' pOut2='0' pOut3='0' pOut4='0' pOut5='0' pOut6='0' pOut7='0' pOut8='0'  />
+	<MIDIDevIn index='1' name="nanoKONTROL2" />
+	<MIDIDevIn index='2' name="-" />
+	<MIDIDevOut index='1' name="X-Touch" />
+	<RustBusAsioPatch index='1' left='0' right='0' />
+	<RustBusAsioPatch index='2' left='3' right='2' />
+	<RustBusAsioPatch index='3' left='4' right='5' />
+	<RustBusDevice dir='in' index='4' type='3' name="CABLE Output" />
+	<RustBusDevice dir='in' index='6' type='3' name="CABLE-C Output" />
+	<RustBusDevice dir='out' index='5' type='3' name="CABLE Input" />
+</VoiceMeeterDeviceConfiguration>
+<VoiceMeeterParameters>
+	<LabelStrip1>Mic</LabelStrip1>
+	<LabelStrip2></LabelStrip2>
+	<LabelStrip3></LabelStrip3>
+	<LabelVirtualStrip1>Desktop</LabelVirtualStrip1>
+	<LabelVirtualStrip3>Game</LabelVirtualStrip3>
+	<LabelVirtualStrip2></LabelVirtualStrip2>
+	<VMOptions MonitorOnSEL='1' SliderRelative='1' />
+	<K7BUSRoute busa='1' busa2='0' busa3='0' busb='1' busb2='0' busb3='0' dblevel='-6.00' />
+	<Strip index='1' mute='1' vaio='0' solo='0' mono='0' muc='0' prg_c='1' prg_g='1' busa='1' busa2='1' busa3='0' busb='1' busb2='0' busb3='0' greenmode='0' karaoke='0' stripmode='0' dblevel='-3.00' dblimit='-6.00' />
+	<RustBusStrip index='1' denoise='0' denoiseamount='1.00' />
+	<StripComp index='1' gainin='0.00' attack='10.0' release='50.0' knee='0.50' comprate='3.000' threshold='-18.00' automakeup='1' gainout='0.00' />
+	<StripGate index='1' thresin='-30.00' damping='-60.00' bpsidechain='100' attack='0.0' hold='20.0' release='80.0' />
+	<Strip index='1' paneltype='0' Panel3Dx='0.000' Panel3Dy='0.000' ColorPanelx='0.300' ColorPanely='-0.200' ModPanelx='0.000' ModPanely='0.000' audibility_c='4.00' audibility_g='5.00' />
+	<Strip index='2' mute='0' vaio='0' solo='1' mono='1' muc='0' prg_c='0' prg_g='1' busa='1' busa2='0' busa3='1' busb='0' busb2='0' busb3='0' greenmode='0' karaoke='0' stripmode='0' dblevel='0.00' dblimit='12.00' />
+	<RustBusStrip index='2' denoise='1' denoiseamount='0.50' />
+	<StripComp index='2' gainin='0.00' attack='10.0' release='50.0' knee='0.50' comprate='1.000' threshold='-20.00' automakeup='1' gainout='0.00' />
+	<StripGate index='2' thresin='-60.00' damping='-60.00' bpsidechain='100' attack='0.0' hold='500.0' release='1000.0' />
+	<Strip index='2' paneltype='2' Panel3Dx='0.000' Panel3Dy='0.000' ColorPanelx='0.000' ColorPanely='0.000' ModPanelx='0.200' ModPanely='0.600' audibility_c='0.00' audibility_g='0.00' />
+	<Strip index='3' mute='0' vaio='0' solo='0' mono='0' muc='0' prg_c='1' prg_g='1' busa='1' busa2='0' busa3='0' busb='0' busb2='1' busb3='0' greenmode='0' karaoke='0' stripmode='1' dblevel='4.00' dblimit='-10.00' />
+	<RustBusStrip index='3' denoise='0' denoiseamount='1.00' />
+	<StripComp index='3' gainin='0.00' attack='10.0' release='50.0' knee='0.50' comprate='1.000' threshold='-20.00' automakeup='1' gainout='0.00' />
+	<StripGate index='3' thresin='-60.00' damping='-60.00' bpsidechain='100' attack='0.0' hold='500.0' release='1000.0' />
+	<Strip index='3' paneltype='1' Panel3Dx='0.250' Panel3Dy='0.200' ColorPanelx='0.000' ColorPanely='0.000' ModPanelx='0.000' ModPanely='0.000' audibility_c='0.00' audibility_g='0.00' />
+	<Strip index='4' mute='0' vaio='0' solo='0' mono='0' muc='1' prg_c='0' prg_g='0' busa='1' busa2='1' busa3='0' busb='1' busb2='0' busb3='0' greenmode='0' karaoke='0' stripmode='0' dblevel='0.00' dblimit='12.00' />
+	<StripComp index='4' gainin='0.00' attack='10.0' release='50.0' knee='0.50' comprate='1.000' threshold='-20.00' automakeup='1' gainout='0.00' />
+	<StripGate index='4' thresin='-60.00' damping='-60.00' bpsidechain='100' attack='0.0' hold='500.0' release='1000.0' />
+	<Strip index='4' EQGain1='4.00' EQGain2='-3.00' EQGain3='2.00' Panel3Dx='-0.200' Panel3Dy='0.100' />
+	<Strip index='5' mute='0' vaio='0' solo='0' mono='0' muc='0' prg_c='0' prg_g='0' busa='0' busa2='0' busa3='1' busb='0' busb2='1' busb3='0' greenmode='0' karaoke='2' stripmode='0' dblevel='-2.00' dblimit='12.00' />
+	<StripComp index='5' gainin='0.00' attack='10.0' release='50.0' knee='0.50' comprate='1.000' threshold='-20.00' automakeup='1' gainout='0.00' />
+	<StripGate index='5' thresin='-60.00' damping='-60.00' bpsidechain='100' attack='0.0' hold='500.0' release='1000.0' />
+	<Strip index='5' EQGain1='0.00' EQGain2='0.00' EQGain3='0.00' Panel3Dx='0.000' Panel3Dy='0.000' />
+	<Strip index='6' mute='0' vaio='0' solo='0' mono='1' muc='0' prg_c='0' prg_g='0' busa='1' busa2='0' busa3='0' busb='0' busb2='0' busb3='1' greenmode='0' karaoke='0' stripmode='0' dblevel='0.00' dblimit='12.00' />
+	<StripComp index='6' gainin='0.00' attack='10.0' release='50.0' knee='0.50' comprate='1.000' threshold='-20.00' automakeup='1' gainout='0.00' />
+	<StripGate index='6' thresin='-60.00' damping='-60.00' bpsidechain='100' attack='0.0' hold='500.0' release='1000.0' />
+	<Strip index='6' EQGain1='0.00' EQGain2='3.00' EQGain3='0.00' Panel3Dx='0.000' Panel3Dy='0.000' />
+	<Bus index='1' mute='0' vaio='0' mono='0' cross='0' BusMode='0' EQon='1' SEL='0' monitor='0' dblevel='0.00' greenmode='0' dblimit='-6.00' />
+	<Bus index='2' mute='1' vaio='0' mono='1' cross='0' BusMode='7' EQon='0' SEL='0' monitor='0' dblevel='0.00' greenmode='0' dblimit='12.00' />
+	<Bus index='3' mute='0' vaio='0' mono='0' cross='0' BusMode='4' EQon='0' SEL='1' monitor='0' dblevel='0.00' greenmode='0' dblimit='12.00' />
+	<Bus index='4' mute='0' vaio='0' mono='2' cross='0' BusMode='1' EQon='1' SEL='0' monitor='0' dblevel='0.00' greenmode='0' dblimit='12.00' />
+	<Bus index='5' mute='0' vaio='0' mono='0' cross='0' BusMode='5' EQon='0' SEL='0' monitor='1' dblevel='-4.00' greenmode='0' dblimit='12.00' />
+	<Bus index='6' mute='0' vaio='0' mono='0' cross='0' BusMode='13' EQon='0' SEL='0' monitor='0' dblevel='6.00' greenmode='0' dblimit='-12.00' />
+	<LabelBus1></LabelBus1>
+	<LabelBus2></LabelBus2>
+	<LabelBus3>Head&lt;phones&gt;</LabelBus3>
+	<LabelVirtualBus1></LabelVirtualBus1>
+	<LabelVirtualBus2></LabelVirtualBus2>
+	<LabelVirtualBus3>Stream</LabelVirtualBus3>
+<VoiceMeeterBUSEQ>
+	<Bus index='1' channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='1' channel='0' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<Bus index='1' channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='1' channel='0' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<Bus index='1' channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='1' channel='0' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<Bus index='1' channel='0' trim='-2.00' delay='0.00' />
+	<Bus index='1' channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='1' channel='1' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<Bus index='1' channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='1' channel='1' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<Bus index='1' channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='1' channel='1' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<Bus index='1' channel='1' trim='-2.00' delay='3.00' />
+	<Bus index='1' channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='1' channel='2' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<Bus index='1' channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='1' channel='2' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<Bus index='1' channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='1' channel='2' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<Bus index='1' channel='2' trim='-2.00' delay='0.00' />
+	<Bus index='1' channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='1' channel='3' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<Bus index='1' channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='1' channel='3' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<Bus index='1' channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='1' channel='3' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<Bus index='1' channel='3' trim='-2.00' delay='0.00' />
+	<Bus index='1' channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='1' channel='4' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<Bus index='1' channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='1' channel='4' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<Bus index='1' channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='1' channel='4' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<Bus index='1' channel='4' trim='-2.00' delay='0.00' />
+	<Bus index='1' channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='1' channel='5' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<Bus index='1' channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='1' channel='5' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<Bus index='1' channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='1' channel='5' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<Bus index='1' channel='5' trim='-2.00' delay='0.00' />
+	<Bus index='1' channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='1' channel='6' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<Bus index='1' channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='1' channel='6' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<Bus index='1' channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='1' channel='6' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<Bus index='1' channel='6' trim='-2.00' delay='0.00' />
+	<Bus index='1' channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='1' channel='7' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<Bus index='1' channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='1' channel='7' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<Bus index='1' channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='1' channel='7' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<Bus index='1' channel='7' trim='-2.00' delay='0.00' />
+	<Bus index='2' channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='2' channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='2' channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='2' channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='2' channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='2' channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='2' channel='0' trim='0.00' delay='0.00' />
+	<Bus index='2' channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='2' channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='2' channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='2' channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='2' channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='2' channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='2' channel='1' trim='0.00' delay='0.00' />
+	<Bus index='2' channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='2' channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='2' channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='2' channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='2' channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='2' channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='2' channel='2' trim='0.00' delay='0.00' />
+	<Bus index='2' channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='2' channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='2' channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='2' channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='2' channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='2' channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='2' channel='3' trim='0.00' delay='0.00' />
+	<Bus index='2' channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='2' channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='2' channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='2' channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='2' channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='2' channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='2' channel='4' trim='0.00' delay='0.00' />
+	<Bus index='2' channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='2' channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='2' channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='2' channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='2' channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='2' channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='2' channel='5' trim='0.00' delay='0.00' />
+	<Bus index='2' channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='2' channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='2' channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='2' channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='2' channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='2' channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='2' channel='6' trim='0.00' delay='0.00' />
+	<Bus index='2' channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='2' channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='2' channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='2' channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='2' channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='2' channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='2' channel='7' trim='0.00' delay='0.00' />
+	<Bus index='3' channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='3' channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='3' channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='3' channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='3' channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='3' channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='3' channel='0' trim='0.00' delay='0.00' />
+	<Bus index='3' channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='3' channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='3' channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='3' channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='3' channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='3' channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='3' channel='1' trim='0.00' delay='0.00' />
+	<Bus index='3' channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='3' channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='3' channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='3' channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='3' channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='3' channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='3' channel='2' trim='0.00' delay='0.00' />
+	<Bus index='3' channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='3' channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='3' channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='3' channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='3' channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='3' channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='3' channel='3' trim='0.00' delay='0.00' />
+	<Bus index='3' channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='3' channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='3' channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='3' channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='3' channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='3' channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='3' channel='4' trim='0.00' delay='0.00' />
+	<Bus index='3' channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='3' channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='3' channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='3' channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='3' channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='3' channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='3' channel='5' trim='0.00' delay='0.00' />
+	<Bus index='3' channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='3' channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='3' channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='3' channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='3' channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='3' channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='3' channel='6' trim='0.00' delay='0.00' />
+	<Bus index='3' channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='3' channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='3' channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='3' channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='3' channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='3' channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='3' channel='7' trim='0.00' delay='0.00' />
+	<Bus index='4' channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='4' channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='4' channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='4' channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='4' channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='4' channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='4' channel='0' trim='0.00' delay='0.00' />
+	<Bus index='4' channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='4' channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='4' channel='1' cell='2' EQon='0' EQtype='0' dblevel='-4.00' freq='600.00' Q='1.00' />
+	<Bus index='4' channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='4' channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='4' channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='4' channel='1' trim='0.00' delay='12.50' />
+	<Bus index='4' channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='4' channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='4' channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='4' channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='4' channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='4' channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='4' channel='2' trim='0.00' delay='0.00' />
+	<Bus index='4' channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='4' channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='4' channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='4' channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='4' channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='4' channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='4' channel='3' trim='0.00' delay='0.00' />
+	<Bus index='4' channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='4' channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='4' channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='4' channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='4' channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='4' channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='4' channel='4' trim='0.00' delay='0.00' />
+	<Bus index='4' channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='4' channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='4' channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='4' channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='4' channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='4' channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='4' channel='5' trim='0.00' delay='0.00' />
+	<Bus index='4' channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='4' channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='4' channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='4' channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='4' channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='4' channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='4' channel='6' trim='0.00' delay='0.00' />
+	<Bus index='4' channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='4' channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='4' channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='4' channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='4' channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='4' channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='4' channel='7' trim='0.00' delay='0.00' />
+	<Bus index='5' channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='5' channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='5' channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='5' channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='5' channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='5' channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='5' channel='0' trim='0.00' delay='0.00' />
+	<Bus index='5' channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='5' channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='5' channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='5' channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='5' channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='5' channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='5' channel='1' trim='0.00' delay='0.00' />
+	<Bus index='5' channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='5' channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='5' channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='5' channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='5' channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='5' channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='5' channel='2' trim='0.00' delay='0.00' />
+	<Bus index='5' channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='5' channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='5' channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='5' channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='5' channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='5' channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='5' channel='3' trim='0.00' delay='0.00' />
+	<Bus index='5' channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='5' channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='5' channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='5' channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='5' channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='5' channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='5' channel='4' trim='0.00' delay='0.00' />
+	<Bus index='5' channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='5' channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='5' channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='5' channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='5' channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='5' channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='5' channel='5' trim='0.00' delay='0.00' />
+	<Bus index='5' channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='5' channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='5' channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='5' channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='5' channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='5' channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='5' channel='6' trim='0.00' delay='0.00' />
+	<Bus index='5' channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='5' channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='5' channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='5' channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='5' channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='5' channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='5' channel='7' trim='0.00' delay='0.00' />
+	<Bus index='6' channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='6' channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='6' channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='6' channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='6' channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='6' channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='6' channel='0' trim='0.00' delay='0.00' />
+	<Bus index='6' channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='6' channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='6' channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='6' channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='6' channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='6' channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='6' channel='1' trim='0.00' delay='0.00' />
+	<Bus index='6' channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='6' channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='6' channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='6' channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='6' channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='6' channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='6' channel='2' trim='0.00' delay='0.00' />
+	<Bus index='6' channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='6' channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='6' channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='6' channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='6' channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='6' channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='6' channel='3' trim='0.00' delay='0.00' />
+	<Bus index='6' channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='6' channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='6' channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='6' channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='6' channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='6' channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='6' channel='4' trim='0.00' delay='0.00' />
+	<Bus index='6' channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='6' channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='6' channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='6' channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='6' channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='6' channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='6' channel='5' trim='0.00' delay='0.00' />
+	<Bus index='6' channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='6' channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='6' channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='6' channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='6' channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='6' channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='6' channel='6' trim='0.00' delay='0.00' />
+	<Bus index='6' channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<Bus index='6' channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<Bus index='6' channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<Bus index='6' channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<Bus index='6' channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<Bus index='6' channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<Bus index='6' channel='7' trim='0.00' delay='0.00' />
+</VoiceMeeterBUSEQ>
+<VoiceMeeterBUSEQMem index='1' abmem='0' abselected='0' >
+	<BusEQmem channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='0' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='0' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='0' trim='-2.00' delay='0.00' />
+	<BusEQmem channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='1' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='1' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='1' trim='-2.00' delay='3.00' />
+	<BusEQmem channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='2' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='2' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='2' trim='-2.00' delay='0.00' />
+	<BusEQmem channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='3' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='3' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='3' trim='-2.00' delay='0.00' />
+	<BusEQmem channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='4' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='4' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='4' trim='-2.00' delay='0.00' />
+	<BusEQmem channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='5' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='5' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='5' trim='-2.00' delay='0.00' />
+	<BusEQmem channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='6' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='6' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='6' trim='-2.00' delay='0.00' />
+	<BusEQmem channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='7' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='7' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='7' trim='-2.00' delay='0.00' />
+</VoiceMeeterBUSEQMem>
+<VoiceMeeterBUSEQMem index='1' abmem='1' >
+	<BusEQmem channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='0' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='0' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='0' trim='-2.00' delay='0.00' />
+	<BusEQmem channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='1' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='1' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='1' trim='-2.00' delay='3.00' />
+	<BusEQmem channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='2' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='2' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='2' trim='-2.00' delay='0.00' />
+	<BusEQmem channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='3' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='3' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='3' trim='-2.00' delay='0.00' />
+	<BusEQmem channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='4' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='4' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='4' trim='-2.00' delay='0.00' />
+	<BusEQmem channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='5' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='5' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='5' trim='-2.00' delay='0.00' />
+	<BusEQmem channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='6' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='6' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='6' trim='-2.00' delay='0.00' />
+	<BusEQmem channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='7' cell='1' EQon='1' EQtype='3' dblevel='0.00' freq='80.00' Q='0.70' />
+	<BusEQmem channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='7' cell='3' EQon='1' EQtype='0' dblevel='6.00' freq='1000.00' Q='1.20' />
+	<BusEQmem channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='5' EQon='1' EQtype='2' dblevel='-4.00' freq='8000.00' Q='0.70' />
+	<BusEQmem channel='7' trim='-2.00' delay='0.00' />
+</VoiceMeeterBUSEQMem>
+<VoiceMeeterBUSEQMem index='2' abmem='0' abselected='0' >
+	<BusEQmem channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='0' trim='0.00' delay='0.00' />
+	<BusEQmem channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='1' trim='0.00' delay='0.00' />
+	<BusEQmem channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='2' trim='0.00' delay='0.00' />
+	<BusEQmem channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='3' trim='0.00' delay='0.00' />
+	<BusEQmem channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='4' trim='0.00' delay='0.00' />
+	<BusEQmem channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='5' trim='0.00' delay='0.00' />
+	<BusEQmem channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='6' trim='0.00' delay='0.00' />
+	<BusEQmem channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='7' trim='0.00' delay='0.00' />
+</VoiceMeeterBUSEQMem>
+<VoiceMeeterBUSEQMem index='2' abmem='1' >
+	<BusEQmem channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='0' trim='0.00' delay='0.00' />
+	<BusEQmem channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='1' trim='0.00' delay='0.00' />
+	<BusEQmem channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='2' trim='0.00' delay='0.00' />
+	<BusEQmem channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='3' trim='0.00' delay='0.00' />
+	<BusEQmem channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='4' trim='0.00' delay='0.00' />
+	<BusEQmem channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='5' trim='0.00' delay='0.00' />
+	<BusEQmem channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='6' trim='0.00' delay='0.00' />
+	<BusEQmem channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='7' trim='0.00' delay='0.00' />
+</VoiceMeeterBUSEQMem>
+<VoiceMeeterBUSEQMem index='3' abmem='0' abselected='0' >
+	<BusEQmem channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='0' trim='0.00' delay='0.00' />
+	<BusEQmem channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='1' trim='0.00' delay='0.00' />
+	<BusEQmem channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='2' trim='0.00' delay='0.00' />
+	<BusEQmem channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='3' trim='0.00' delay='0.00' />
+	<BusEQmem channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='4' trim='0.00' delay='0.00' />
+	<BusEQmem channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='5' trim='0.00' delay='0.00' />
+	<BusEQmem channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='6' trim='0.00' delay='0.00' />
+	<BusEQmem channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='7' trim='0.00' delay='0.00' />
+</VoiceMeeterBUSEQMem>
+<VoiceMeeterBUSEQMem index='3' abmem='1' >
+	<BusEQmem channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='0' trim='0.00' delay='0.00' />
+	<BusEQmem channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='1' trim='0.00' delay='0.00' />
+	<BusEQmem channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='2' trim='0.00' delay='0.00' />
+	<BusEQmem channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='3' trim='0.00' delay='0.00' />
+	<BusEQmem channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='4' trim='0.00' delay='0.00' />
+	<BusEQmem channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='5' trim='0.00' delay='0.00' />
+	<BusEQmem channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='6' trim='0.00' delay='0.00' />
+	<BusEQmem channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='7' trim='0.00' delay='0.00' />
+</VoiceMeeterBUSEQMem>
+<VoiceMeeterBUSEQMem index='4' abmem='0' abselected='0' >
+	<BusEQmem channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='0' trim='0.00' delay='0.00' />
+	<BusEQmem channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='1' cell='2' EQon='0' EQtype='0' dblevel='-4.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='1' trim='0.00' delay='12.50' />
+	<BusEQmem channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='2' trim='0.00' delay='0.00' />
+	<BusEQmem channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='3' trim='0.00' delay='0.00' />
+	<BusEQmem channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='4' trim='0.00' delay='0.00' />
+	<BusEQmem channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='5' trim='0.00' delay='0.00' />
+	<BusEQmem channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='6' trim='0.00' delay='0.00' />
+	<BusEQmem channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='7' trim='0.00' delay='0.00' />
+</VoiceMeeterBUSEQMem>
+<VoiceMeeterBUSEQMem index='4' abmem='1' >
+	<BusEQmem channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='0' trim='0.00' delay='0.00' />
+	<BusEQmem channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='1' cell='2' EQon='0' EQtype='0' dblevel='-4.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='1' trim='0.00' delay='12.50' />
+	<BusEQmem channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='2' trim='0.00' delay='0.00' />
+	<BusEQmem channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='3' trim='0.00' delay='0.00' />
+	<BusEQmem channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='4' trim='0.00' delay='0.00' />
+	<BusEQmem channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='5' trim='0.00' delay='0.00' />
+	<BusEQmem channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='6' trim='0.00' delay='0.00' />
+	<BusEQmem channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='7' trim='0.00' delay='0.00' />
+</VoiceMeeterBUSEQMem>
+<VoiceMeeterBUSEQMem index='5' abmem='0' abselected='0' >
+	<BusEQmem channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='0' trim='0.00' delay='0.00' />
+	<BusEQmem channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='1' trim='0.00' delay='0.00' />
+	<BusEQmem channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='2' trim='0.00' delay='0.00' />
+	<BusEQmem channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='3' trim='0.00' delay='0.00' />
+	<BusEQmem channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='4' trim='0.00' delay='0.00' />
+	<BusEQmem channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='5' trim='0.00' delay='0.00' />
+	<BusEQmem channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='6' trim='0.00' delay='0.00' />
+	<BusEQmem channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='7' trim='0.00' delay='0.00' />
+</VoiceMeeterBUSEQMem>
+<VoiceMeeterBUSEQMem index='5' abmem='1' >
+	<BusEQmem channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='0' trim='0.00' delay='0.00' />
+	<BusEQmem channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='1' trim='0.00' delay='0.00' />
+	<BusEQmem channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='2' trim='0.00' delay='0.00' />
+	<BusEQmem channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='3' trim='0.00' delay='0.00' />
+	<BusEQmem channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='4' trim='0.00' delay='0.00' />
+	<BusEQmem channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='5' trim='0.00' delay='0.00' />
+	<BusEQmem channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='6' trim='0.00' delay='0.00' />
+	<BusEQmem channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='7' trim='0.00' delay='0.00' />
+</VoiceMeeterBUSEQMem>
+<VoiceMeeterBUSEQMem index='6' abmem='0' abselected='0' >
+	<BusEQmem channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='0' trim='0.00' delay='0.00' />
+	<BusEQmem channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='1' trim='0.00' delay='0.00' />
+	<BusEQmem channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='2' trim='0.00' delay='0.00' />
+	<BusEQmem channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='3' trim='0.00' delay='0.00' />
+	<BusEQmem channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='4' trim='0.00' delay='0.00' />
+	<BusEQmem channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='5' trim='0.00' delay='0.00' />
+	<BusEQmem channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='6' trim='0.00' delay='0.00' />
+	<BusEQmem channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='7' trim='0.00' delay='0.00' />
+</VoiceMeeterBUSEQMem>
+<VoiceMeeterBUSEQMem index='6' abmem='1' >
+	<BusEQmem channel='0' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='0' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='0' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='0' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='0' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='0' trim='0.00' delay='0.00' />
+	<BusEQmem channel='1' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='1' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='1' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='1' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='1' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='1' trim='0.00' delay='0.00' />
+	<BusEQmem channel='2' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='2' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='2' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='2' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='2' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='2' trim='0.00' delay='0.00' />
+	<BusEQmem channel='3' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='3' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='3' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='3' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='3' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='3' trim='0.00' delay='0.00' />
+	<BusEQmem channel='4' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='4' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='4' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='4' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='4' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='4' trim='0.00' delay='0.00' />
+	<BusEQmem channel='5' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='5' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='5' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='5' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='5' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='5' trim='0.00' delay='0.00' />
+	<BusEQmem channel='6' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='6' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='6' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='6' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='6' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='6' trim='0.00' delay='0.00' />
+	<BusEQmem channel='7' cell='0' EQon='0' EQtype='1' dblevel='0.00' freq='60.00' Q='1.00' />
+	<BusEQmem channel='7' cell='1' EQon='0' EQtype='0' dblevel='0.00' freq='200.00' Q='1.00' />
+	<BusEQmem channel='7' cell='2' EQon='0' EQtype='0' dblevel='0.00' freq='600.00' Q='1.00' />
+	<BusEQmem channel='7' cell='3' EQon='0' EQtype='0' dblevel='0.00' freq='2000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='4' EQon='0' EQtype='0' dblevel='0.00' freq='6000.00' Q='1.00' />
+	<BusEQmem channel='7' cell='5' EQon='0' EQtype='2' dblevel='0.00' freq='12000.00' Q='1.00' />
+	<BusEQmem channel='7' trim='0.00' delay='0.00' />
+</VoiceMeeterBUSEQMem>
+	<PatchComposite c1='1' c2='2' c3='7' c4='8' c5='0' c6='22' c7='30' c8='4' mode='1' />
+	<PatchInsert c1='1' c2='0' c3='0' c4='0' c5='0' c6='0' c7='0' c8='-1' c9='0' c10='0' c11='0' c12='0' c13='0' c14='0' c15='0' c16='0' c17='0' c18='0' c19='0' c20='0' c21='0' c22='0' mode='1' />
+</VoiceMeeterParameters>
+<VoiceMeeterRecorder>
+	<RecordMode RecBus='3' DontPlay='0' Loop='1' MultiTrack='0' TimerStop='60' />
+	<RecordArm ArmIn1='0' ArmIn2='1' ArmIn3='0' ArmIn4='0' ArmIn5='0' ArmIn6='1' ArmBus1='1' ArmBus2='0' ArmBus3='0' ArmBus4='0' ArmBus5='1' ArmBus6='0' />
+	<RecordLastFileName>C:\rec\take 1.wav</RecordLastFileName>
+	<RecordDirectory>D:\rec &amp; co</RecordDirectory>
+	<RecordPrefix>show</RecordPrefix>
+	<RecordParam FileType='4' BitRes='24' TargetSR='0' nbChannel='2' kbps='320' preRecTime='0' />
+</VoiceMeeterRecorder>
+<VoiceMeeterMidiMap>
+	<MidiMapName>My Map</MidiMapName>
+	<MidiMapItem id='InGainFader1' b1='B0' b2='07' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InGainFader2' b1='91' b2='24' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='1' feed1='1' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InGainFader3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInGainFader1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInGainFader2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInGainFader3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='LRPanIn1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='LRPanIn2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='LRPanIn3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='LRPanVIn1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='LRPanVIn2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='LRPanVIn3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='ResetLRPanIn1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='ResetLRPanIn2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='ResetLRPanIn3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='ResetLRPanVIn1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='ResetLRPanVIn2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='ResetLRPanVIn3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InMute1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InMute2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InMute3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInMute1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInMute2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInMute3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InSolo1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InSolo2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InSolo3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInSolo1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInSolo2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInSolo3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInMuteC1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInMuteC2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InDenoise1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InDenoise2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InDenoise3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InComp1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InComp2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InComp3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InGate1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InGate2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InGate3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InLimit1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InLimit2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='InLimit3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInLimit1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInLimit2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VInLimit3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip1A1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip1A2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip1A3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip1B1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip1B2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip1B3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip2A1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip2A2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip2A3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip2B1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip2B2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip2B3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip3A1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip3A2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip3A3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip3B1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip3B2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip3B3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip4A1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip4A2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip4A3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip4B1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip4B2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip4B3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip5A1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip5A2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip5A3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip5B1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip5B2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip5B3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip6A1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip6A2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip6A3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip6B1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip6B2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='Strip6B3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VIn1EQHigh' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VIn1EQMed' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VIn1EQBass' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VIn2EQHigh' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VIn2EQMed' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VIn2EQBass' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VIn3EQHigh' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VIn3EQMed' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VIn3EQBass' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='OutGainFader1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='OutGainFader2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='OutGainFader3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VOutGainFader1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VOutGainFader2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VOutGainFader3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='OutMute1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='OutMute2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='OutMute3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VOutMute1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VOutMute2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VOutMute3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='ToggleB1B2s1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='OutEqOn1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='OutEqOn2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='OutEqOn3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VOutEqOn1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VOutEqOn2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VOutEqOn3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='BusLimit1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='BusLimit2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='BusLimit3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VBusLimit1' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VBusLimit2' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='VBusLimit3' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='TapePlay' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='TapeRec' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='TapeStop' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='TapeREW' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='TapeFF' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='TapeRePlay' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+	<MidiMapItem id='TapeGain' b1='00' b2='00' b3='00' b4='00' b5='00' b6='00' coder='0' codertype='0' ptt='0' feed1='0' feed2='0' omni='0' disabled='0' feedOn='127' feedOff='0'/>
+</VoiceMeeterMidiMap>
+<VBANConfiguration>
+	<VBAN status="1" username="me" color="00AA9678" />
+	<VBANStreamIn index='1' in='2' status='1' name='Stream1' ip='192.168.1.20' port='6980' NQ='3' />
+	<VBANStreamIn index='2' in='4' status='0' name='Stream2' ip='' port='6980' NQ='1' />
+	<VBANStreamIn index='3' in='0' status='0' name='Stream3' ip='' port='6980' NQ='1' />
+	<VBANStreamIn index='4' in='0' status='0' name='Stream4' ip='' port='6980' NQ='1' />
+	<VBANStreamIn index='5' in='0' status='0' name='Stream5' ip='' port='6980' NQ='1' />
+	<VBANStreamIn index='6' in='0' status='0' name='Stream6' ip='' port='6980' NQ='1' />
+	<VBANStreamIn index='7' in='0' status='0' name='Stream7' ip='' port='6980' NQ='1' />
+	<VBANStreamIn index='8' in='0' status='0' name='Stream8' ip='' port='6980' NQ='1' />
+	<VBANDataIn index='1' status='0' name='MIDI1' ip='' port='6980' />
+	<VBANCommandIn index='1' status='0' name='Command1' mouse='0' ip='' port='6980' />
+	<VBANStreamOut index='1' bus='3' status='1' name='Stream1' ip='192.168.1.30' port='6980' SR='44100' ch='8' NQ='0' format='1' />
+	<VBANStreamOut index='2' bus='0' status='0' name='Stream2' ip='' port='6980' SR='48000' ch='2' NQ='0' format='1' />
+	<VBANStreamOut index='3' bus='0' status='0' name='Stream3' ip='' port='6980' SR='48000' ch='2' NQ='0' format='1' />
+	<VBANStreamOut index='4' bus='0' status='0' name='Stream4' ip='' port='6980' SR='48000' ch='2' NQ='0' format='1' />
+	<VBANStreamOut index='5' bus='0' status='0' name='Stream5' ip='' port='6980' SR='48000' ch='2' NQ='0' format='1' />
+	<VBANStreamOut index='6' bus='0' status='0' name='Stream6' ip='' port='6980' SR='48000' ch='2' NQ='0' format='1' />
+	<VBANStreamOut index='7' bus='0' status='0' name='Stream7' ip='' port='6980' SR='48000' ch='2' NQ='0' format='1' />
+	<VBANStreamOut index='8' bus='0' status='0' name='Stream8' ip='' port='6980' SR='48000' ch='2' NQ='0' format='1' />
+	<VBANDataOut index='1' source='7' status='0' name='MIDI1' ip='' port='6980' />
+	<VBANFrameOut index='1' source='0' status='0' name='VIDEO1' ip='' port='6980' mbps='12' fps='20' cursor='0' format='JPG' quality='50' />
+</VBANConfiguration>
+</VBAudioVoicemeeterSettings>

@@ -885,6 +885,90 @@ mod tests {
         assert!(xml.contains("\t<K7BUSRoute busa='1' busa2='0' busa3='0' busb='0' busb2='0' busb3='0' dblevel='0.00' />\n"));
         assert!(xml.contains("\t<InputDev index='1' name=\"-\" />\n"));
     }
+
+    /// Characterization golden: must not change during refactor Phases 2-5.
+    const GOLDEN_XML: &str = include_str!("../tests/fixtures/settings_golden.xml");
+
+    /// Non-default settings touching every section of the file.
+    fn golden_settings() -> Settings {
+        let mut s = Settings { params: crate::engine::golden::params(), ..Settings::default() };
+        s.params.strips[0].mute = true;
+        s.params.strips[1].solo = true;
+        s.params.strips[2].strip_mode = 1;
+        s.params.buses[1].mute = true;
+        s.params.buses[2].sel = true;
+        s.params.buses[4].monitor = true;
+        s.params.buses[3].eq_on = true;
+        s.params.buses[3].eq[1].cells[2].gain_db = -4.0;
+        s.params.buses[3].eq[1].delay_ms = 12.5;
+        s.device.buffer_wdm = 256;
+        s.device.buffer_asio = 128;
+        s.device.sr_asio = 96000;
+        s.device.monitor_delay_ms = [1.5, 0.0, 20.0];
+        s.device.asio_patch = [[0, 0], [3, 2], [4, 5]];
+        s.device.inputs[0] = Some(DeviceRef { kind: DEV_WDM, name: "Microphone (USB Audio)".into() });
+        s.device.inputs[2] = Some(DeviceRef { kind: DEV_ASIO, name: "Focusrite USB ASIO".into() });
+        s.device.inputs[3] = Some(DeviceRef { kind: DEV_WDM, name: "CABLE Output".into() });
+        s.device.inputs[5] = Some(DeviceRef { kind: DEV_WDM, name: "CABLE-C Output".into() });
+        s.device.outputs[0] = Some(DeviceRef { kind: DEV_ASIO, name: "Focusrite USB ASIO".into() });
+        s.device.outputs[1] = Some(DeviceRef { kind: DEV_MME, name: "Speakers & <Phones>".into() });
+        s.device.outputs[4] = Some(DeviceRef { kind: DEV_WDM, name: "CABLE Input".into() });
+        s.device.midi_in[0] = "nanoKONTROL2".into();
+        s.device.midi_out = "X-Touch".into();
+        s.labels.strips[0] = "Mic".into();
+        s.labels.strips[3] = "Desktop".into();
+        s.labels.strips[5] = "Game".into();
+        s.labels.buses[2] = "Head<phones>".into();
+        s.labels.buses[5] = "Stream".into();
+        s.monitor_on_sel = true;
+        s.slider_relative = true;
+        s.insert_patch[0] = 1;
+        s.insert_patch[7] = -1;
+        s.insert_mode = true;
+        s.recorder.rec_bus = 3;
+        s.recorder.loop_play = true;
+        s.recorder.timer_stop = 60;
+        s.recorder.arm_inputs[1] = true;
+        s.recorder.arm_inputs[5] = true;
+        s.recorder.arm_buses[4] = true;
+        s.recorder.last_file = r"C:\rec\take 1.wav".into();
+        s.recorder.directory = r"D:\rec & co".into();
+        s.recorder.prefix = "show".into();
+        s.recorder.file_type = FILE_MP3;
+        s.recorder.kbps = 320;
+        s.midi.name = "My Map".into();
+        s.midi.items[0].bytes = [0xB0, 7, 0, 0, 0, 0];
+        s.midi.items[1].bytes = [0x91, 36, 0, 0, 0, 0];
+        s.midi.items[1].ptt = true;
+        s.midi.items[1].feed1 = true;
+        s.vban.enabled = true;
+        s.vban.username = "me".into();
+        s.vban.inputs[0].enabled = true;
+        s.vban.inputs[0].ip = "192.168.1.20".into();
+        s.vban.inputs[0].nq = 3;
+        s.vban.inputs[1].strip = 4;
+        s.vban.outputs[0].enabled = true;
+        s.vban.outputs[0].ip = "192.168.1.30".into();
+        s.vban.outputs[0].bus = 3;
+        s.vban.outputs[0].sr = 44100;
+        s.vban.outputs[0].channels = 8;
+        s
+    }
+
+    /// Byte-for-byte writer output for non-default settings.
+    #[test]
+    fn golden_settings_xml_fixture() {
+        let xml = golden_settings().to_xml();
+        assert!(xml == GOLDEN_XML, "settings XML differs from tests/fixtures/settings_golden.xml:\n{xml}");
+    }
+
+    /// Fixture → parse → write reproduces the fixture exactly.
+    #[test]
+    fn golden_settings_xml_fixture_rewrites_identically() {
+        let s = Settings::from_xml(GOLDEN_XML).unwrap();
+        assert!(s.to_xml() == GOLDEN_XML);
+        assert_eq!(s, golden_settings());
+    }
 }
 
 #[cfg(test)]
