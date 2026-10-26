@@ -14,7 +14,9 @@ Rust desktop audio mixer for Windows (clean-room Voicemeeter Banana rebuild). Fe
 - `engine/asio.rs` `static LIVE` is required by the ASIO C ABI; keep it.
 - Every change must leave `.\build.ps1 test` passing. One logical change per commit; refactors and behaviour changes in separate commits.
 
-## Refactor plan (agreed)
+## Refactor plan (Phases 0-5 done on branch `refactor`; Phase 6 not started)
 Phases, in order: 0 fix GUI params clobber race (`gui/mod.rs` write-back of the whole `MixParams`) · 1 characterization tests (golden mixer output, settings XML fixture) · 2 break module cycles (settings↔midi, settings↔vban, engine↔recorder) and split mixed I/O modules · 3 split `Engine::start` and unify WASAPI/ASIO/internal master rendering with one fallback (also fixes silent failure when the WASAPI master `play()` fails) · 4 extract a `Session` struct from `App` with a single `request_restart()` · 5 split `gui/mod.rs` into strip/bus/player/topbar/help · 6 (optional) two-crate workspace.
 Full details with file references: `docs/REFACTOR_PLAN.md`.
+Layout after the refactor: `session.rs` owns lifecycle (settings, engine, MIDI/hotkey runtimes, persistence); `gui/` is UI only (`mod.rs`, `strip`, `bus`, `player`, `topbar`, `help`, `dialogs`). `ring.rs` is at the crate root; `midi/`, `vban/`, `hotkey/` are split into pure + I/O halves; the tape RT core is `engine/tape.rs`.
+`golden_*` tests (engine/mixer.rs, engine/mod.rs, settings.rs + `tests/fixtures/settings_golden.xml`) pin current output: a change there means behaviour changed.
 Not doing: public AudioHost/Network/MidiHost traits, DTOs/use-case objects, many crates, dyn dispatch in the render path.

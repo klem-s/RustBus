@@ -13,7 +13,7 @@ Legend: ✅ done · 🟡 partial · ❌ not done · ⛔ excluded on purpose
 | **Third virtual input strip ("Virtual Input 3")** (beyond Banana, like Potato) | ✅ | 8 ch, 3-band EQ, pan, fader, A1..B3 routing, device select; MIDI IDs (`VInGainFader3`, `VInMute3`, `Strip6A1`…), script `Strip[5]`, VBAN in destination, recorder arm `ArmIn6`, XML `LabelVirtualStrip3`, composite inputs extended. M.C. stays on virtual #1, karaoke on #2 |
 | **Extra virtual bus B3** (beyond Banana, like Potato) | ✅ | Routing button on every strip and the tape deck, fader/EQ/modes, output device, MIDI IDs (`StripNB3`, `VOutGainFader3`…), script `Bus[5]` / `Strip[i].B3`, XML `busb3` / `LabelVirtualBus3` / `ArmBus6` |
 | A1 is the master clock; internal clock fallback | ✅ | Same SR whitelist as the original (32k…192k) |
-| Every other device resampled against the master clock (drift-compensated) | ✅ | `engine/ring.rs` AdaptiveReader |
+| Every other device resampled against the master clock (drift-compensated) | ✅ | `ring.rs` AdaptiveReader |
 | Auto restart on device error | ✅ | Menu option; restarts after 2 s |
 | Restart audio engine (Ctrl+R) | ✅ | |
 | Device back-ends: WDM (WASAPI shared) | ✅ | via `cpal` |
@@ -77,12 +77,12 @@ Legend: ✅ done · 🟡 partial · ❌ not done · ⛔ excluded on purpose
 | Feature | Status | Notes |
 |---|---|---|
 | Parameter script language (`Strip[i].Gain = x;`, `+=`/`-=`, Bus modes, EQ, Recorder.*, labels, devices, Command.*) | ✅ | `script.rs`; Command Console dialog |
-| **Mic hotkey: push to talk / push to mute / toggle** (RustBus extension) | ✅ | `hotkey.rs`, Menu → "Mic Hotkey". Any key or mouse button (Mouse 4/5, F13–F24…), any strip. Polls `GetAsyncKeyState` every 5 ms, so it works while a game has focus; no keyboard hook is installed. Tested with a synthesized F13. |
-| VBAN audio out (8 streams, any bus, SR/ch/format conversion) | ✅ | `vban.rs`; UDP loopback-tested |
+| **Mic hotkey: push to talk / push to mute / toggle** (RustBus extension) | ✅ | `hotkey/` (config + Win32 poller), Menu → "Mic Hotkey". Any key or mouse button (Mouse 4/5, F13–F24…), any strip. Polls `GetAsyncKeyState` every 5 ms, so it works while a game has focus; no keyboard hook is installed. Tested with a synthesized F13. |
+| VBAN audio out (8 streams, any bus, SR/ch/format conversion) | ✅ | `vban/` (proto + net); UDP loopback-tested |
 | VBAN audio in (8 streams → any strip, IP filter, net-quality jitter buffer, stats) | ✅ | |
 | VBAN-TEXT incoming commands (executes scripts) | ✅ | Replaces the Remote API for remote control |
 | VBAN serial/MIDI data, VBAN video frame out, VBAN-Chat, VBAN service/ping | ❌ | Config entries preserved |
-| M.I.D.I. mapping: 2 inputs + feedback output, learn, all original control IDs | ✅ | `midi.rs` |
+| M.I.D.I. mapping: 2 inputs + feedback output, learn, all original control IDs | ✅ | `midi/` (map + runtime) |
 | Control types: linear, coder offset, coder sign-bit (Mackie); PTT; omni; feedback | ✅ | |
 | MIDI map load/save (`VBAudioVoicemeeterMIDIMapping`) | ✅ | |
 | Voicemeeter Remote API (`VoicemeeterRemote.dll` shared memory) | ⛔ | Undocumented proprietary IPC. Use VBAN-TEXT instead. |

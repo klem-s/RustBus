@@ -49,3 +49,10 @@ Cycles: settings↔midi (`settings.rs:15` / `midi.rs:14`), settings↔vban (`set
 
 ## Phase 6 (optional): two-crate workspace (~0.5-1 day)
 `crates/rustbus-core` (params, dsp, mixer, ring, script, settings XML, midi map, vban proto, tape core, Core) and the app (cpal, asio, midir, UDP, hound, egui). Profiles at the root, `default-members` so `build.ps1` keeps working, fix `include_bytes!` font paths in `gui/theme.rs`. Check `Cargo.lock` unchanged and `cargo tree -p rustbus-core` shows no cpal/midir/egui.
+
+## Status (2026-10-26)
+Phases 0-5 are done on branch `refactor`; Phase 6 is not started. Deviations from the plan above:
+- Phase 1: `MAX_BLOCK` is 2048, so the `asio_process` chunking test uses 2×MAX_BLOCK+700 frames (700 alone never splits).
+- Phase 2: `ring.rs` later moved to the crate root (engine re-exports it) to also break engine↔vban, which the plan did not list.
+- Phase 4: there are two restart paths, not one: `request_restart()` (deferred, coalesced, consumed once per frame in `Session::tick`) and `restart_engine()` (immediate; Ctrl+R, menu, System dialog, VBAN Apply, preset recall, `apply_settings`). Routing the immediate ones through the deferred path would delay them by a frame.
+- Phase 5: only `Session::status()` was added as an accessor; other `shared.*` reads stay direct because wrapping them would change locking.
