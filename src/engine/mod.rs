@@ -6,7 +6,7 @@
 
 pub mod asio;
 pub mod mixer;
-pub mod ring;
+pub use crate::ring;
 pub mod tape;
 #[cfg(test)]
 pub(crate) mod golden;

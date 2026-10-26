@@ -7,7 +7,7 @@ use std::sync::Arc;
 use parking_lot::Mutex;
 
 use super::mixer::Mixer;
-use super::ring::Producer;
+use crate::ring::Producer;
 use crate::params::{MAX_CH, NUM_BUSES, NUM_STRIPS};
 use crate::settings::RecorderConfig;
 

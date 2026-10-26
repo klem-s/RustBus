@@ -6,7 +6,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::thread::JoinHandle;
 
-use crate::engine::ring::{ring, Consumer, StreamResampler};
+use crate::ring::{ring, Consumer, StreamResampler};
 use crate::params::MAX_CH;
 use crate::settings::{RecorderConfig, FILE_BWF, FILE_WAV};
 

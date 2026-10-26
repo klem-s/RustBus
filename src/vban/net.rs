@@ -8,7 +8,7 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 
 use super::proto::*;
-use crate::engine::ring::{Consumer, Producer, StreamResampler};
+use crate::ring::{Consumer, Producer, StreamResampler};
 
 /// Live statistics per incoming stream, shown in the VBAN dialog.
 #[derive(Default)]
@@ -276,7 +276,7 @@ mod tests {
 
     #[test]
     fn loopback_audio_and_text() {
-        use crate::engine::ring::ring;
+        use crate::ring::ring;
         let mut cfg = VbanConfig::default();
         cfg.enabled = true;
         let port = 39000 + (std::process::id() % 1000) as u16;

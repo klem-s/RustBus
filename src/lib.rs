@@ -10,6 +10,7 @@ pub mod options;
 pub mod params;
 pub mod presets;
 pub mod recorder;
+pub mod ring;
 pub mod script;
 pub mod session;
 pub mod settings;
