@@ -1,6 +1,9 @@
 //! The running mixer behind the window: settings, the audio engine, options and the device
-//! lists, with a single coalesced path for engine restarts. The GUI owns one `Session` and
-//! keeps only its own view state.
+//! lists. The GUI owns one `Session` and keeps only its own view state.
+//!
+//! Engine restarts have two paths, kept apart to preserve the existing timing: the immediate
+//! `restart_engine`, and the deferred `request_restart`, which coalesces any number of
+//! requests into a single restart on the next `tick`.
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicIsize, Ordering};
@@ -138,7 +141,7 @@ impl Session {
     /// Run the pending restarts: the delayed ones after a device failure or a driver reset
     /// request, then the one asked for with `request_restart`.
     fn poll_restart(&mut self) {
-        // Device failure â†’ auto restart (menu "Auto Restart Audio Engine").
+        // Device failure → auto restart (menu "Auto Restart Audio Engine").
         if self.shared.device_error.load(Ordering::Relaxed) && self.options.auto_restart && self.restart_at.is_none() {
             self.restart_at = Some(Instant::now() + Duration::from_secs(2));
         }
@@ -192,7 +195,7 @@ impl Session {
         }
     }
 
-    pub fn stop_engine(&mut self) {
+    fn stop_engine(&mut self) {
         if let Some(mut e) = self.engine.take() {
             e.stop();
         }
@@ -241,7 +244,7 @@ impl Session {
     // ------------------------------------------------------------ settings
 
     /// The settings with the live mixer parameters and MIDI map.
-    pub fn snapshot_settings(&mut self) -> Settings {
+    fn snapshot_settings(&mut self) -> Settings {
         self.settings.params = *self.shared.params.lock();
         self.settings.midi = self.midi_map.lock().clone();
         self.settings.clone()
@@ -395,7 +398,7 @@ impl Session {
         }
     }
 
-    pub fn finish_recording(&mut self) {
+    fn finish_recording(&mut self) {
         if let Some(job) = self.recorder_job.take() {
             self.shared.tape.recording.store(false, Ordering::Relaxed);
             match job.finish() {
@@ -500,14 +503,22 @@ mod tests {
 
     // No device is configured (or only an ASIO input, which is never opened without an ASIO
     // A1), so every engine runs from the internal clock.
+    // The periodic autosave is pushed far out so `tick` never writes the real last-settings file.
     fn session(settings: Settings) -> Session {
-        Session::new(settings, AppOptions::default(), Arc::new(|| {}))
+        let mut s = Session::new(settings, AppOptions::default(), Arc::new(|| {}));
+        s.last_autosave = Instant::now() + Duration::from_secs(3600);
+        s
     }
 
+    /// A file in a temp directory of its own (per process and test); remove it with `remove_temp`.
     fn temp_path(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("rustbus-session-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("rustbus-session-{}-{name}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         dir.join(name)
+    }
+
+    fn remove_temp(path: &Path) {
+        let _ = std::fs::remove_dir_all(path.parent().unwrap());
     }
 
     fn engine_lines(s: &Session) -> usize {
@@ -557,7 +568,7 @@ mod tests {
         t.load_settings(&path).unwrap();
         assert_eq!(t.snapshot_settings().to_xml(), want.to_xml());
         t.stop_engine();
-        let _ = std::fs::remove_file(path);
+        remove_temp(&path);
     }
 
     #[test]
@@ -604,6 +615,6 @@ mod tests {
         let path = temp_path("buseq.xml");
         save_bus_eq(&path, &p, 4).unwrap();
         assert_eq!(load_bus_eq(&path).unwrap(), p.buses[4].eq);
-        let _ = std::fs::remove_file(path);
+        remove_temp(&path);
     }
 }
