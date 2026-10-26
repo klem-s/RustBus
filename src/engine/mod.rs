@@ -5,6 +5,7 @@
 //! device the engine runs from an internal clock ("SYNC: Internal Master CLOCK").
 
 pub mod asio;
+pub mod latency;
 pub mod mixer;
 pub use crate::ring;
 pub mod tape;
@@ -24,6 +25,7 @@ use parking_lot::Mutex;
 use crate::params::*;
 use crate::settings::{DeviceConfig, DEV_ASIO};
 use crate::vban::{InSink, OutSource, VbanConfig, VbanRuntime, VbanStats};
+use latency::Latency;
 use mixer::{Meters, Mixer, MAX_BLOCK};
 use ring::{ring, AdaptiveReader, Producer};
 use tape::{TapeCore, TapeShared};
@@ -54,6 +56,8 @@ pub struct Shared {
     /// Set when a driver asks to be reopened (ASIO reset request); the GUI restarts the engine.
     pub restart_request: AtomicBool,
     pub vban_stats: Arc<VbanStats>,
+    /// Live latency figures for the Latency Monitor.
+    pub latency: Latency,
 }
 
 impl Shared {
@@ -66,6 +70,7 @@ impl Shared {
             device_error: AtomicBool::new(false),
             restart_request: AtomicBool::new(false),
             vban_stats: Arc::new(VbanStats::default()),
+            latency: Latency::default(),
         })
     }
 }
@@ -153,6 +158,7 @@ impl Core {
         }
         for (strip, rd) in self.inputs.iter_mut() {
             let ch = rd.channels();
+            latency::store(&self.shared.latency.in_queue[*strip], rd.fill_frames(), self.sr);
             rd.read(&mut self.tmp, frames);
             for c in 0..ch {
                 let dst = &mut m.inputs[*strip][c];
@@ -166,6 +172,7 @@ impl Core {
             if sr > 0 {
                 rd.set_ratio(sr as f64 / self.sr as f64);
             }
+            latency::store(&self.shared.latency.vban_queue[*stream], rd.fill_frames(), if sr > 0 { sr } else { self.sr });
             let ch = rd.channels();
             rd.read(&mut self.tmp, frames);
             for c in 0..ch {
@@ -343,6 +350,7 @@ impl Engine {
         let mut status = EngineStatus::default();
         let mut streams = Vec::new();
         shared.device_error.store(false, Ordering::Relaxed);
+        shared.latency.reset();
 
         // ---- master clock: A1 (ASIO driver or WASAPI device)
         let mut a1_asio = None;
@@ -505,7 +513,7 @@ fn wire_inputs(device: &DeviceConfig, a1_asio: Option<&asio::AsioInfo>, latency:
             continue;
         };
         let strip_ch = strip_channels(s);
-        match open_input(&dev, strip_ch, core.shared.clone()) {
+        match open_input(&dev, s, strip_ch, core.shared.clone()) {
             Ok((stream, cons, dev_sr, dev_ch)) => {
                 core.inputs.push((s, AdaptiveReader::new(cons, strip_ch, dev_sr as f64 / core.sr as f64, latency * dev_sr as usize / core.sr as usize)));
                 status.points[s] = Some(format!("WDM: {} ({dev_sr} Hz, {dev_ch} ch)", d.name));
@@ -524,7 +532,7 @@ fn wire_outputs(device: &DeviceConfig, latency: usize, core: &mut Core, status: 
             status.errors.push(format!("Failed to Open Output Device: {}", d.name));
             continue;
         };
-        match open_output(&dev, core.sr, latency, core.shared.clone()) {
+        match open_output(&dev, b, core.sr, latency, core.shared.clone()) {
             Ok((stream, prod, dev_sr, dev_ch)) => {
                 core.outputs.push((b, dev_ch.min(MAX_CH), prod));
                 status.points[NUM_STRIPS + b] = Some(format!("WDM: {} ({dev_sr} Hz, {dev_ch} ch)", d.name));
@@ -588,6 +596,7 @@ fn asio_process(slot: CoreSlot) -> asio::Process {
 /// `n` frames to output frames `done..done + n`. Generic so each master inlines its writer.
 #[inline]
 fn render_chunked(core: &mut Core, total: usize, mut write: impl FnMut(&[Vec<f32>], usize, usize)) {
+    latency::store(&core.shared.latency.master_period, total, core.sr);
     let mut done = 0;
     while done < total {
         let n = (total - done).min(MAX_BLOCK);
@@ -631,32 +640,34 @@ fn err_fn(shared: Arc<Shared>) -> impl FnMut(cpal::StreamError) + Send + 'static
 
 type InputOpen = (cpal::Stream, ring::Consumer, u32, usize);
 
-fn open_input(dev: &cpal::Device, strip_ch: usize, shared: Arc<Shared>) -> Result<InputOpen, String> {
+fn open_input(dev: &cpal::Device, strip: usize, strip_ch: usize, shared: Arc<Shared>) -> Result<InputOpen, String> {
     let cfg = dev.default_input_config().map_err(|e| e.to_string())?;
     let sr = cfg.sample_rate().0;
     let dev_ch = cfg.channels() as usize;
     let (prod, cons) = ring(sr as usize * strip_ch);
     let sc = cfg.config();
     let stream = match cfg.sample_format() {
-        cpal::SampleFormat::F32 => build_in::<f32>(dev, &sc, dev_ch, strip_ch, prod, shared),
-        cpal::SampleFormat::I16 => build_in::<i16>(dev, &sc, dev_ch, strip_ch, prod, shared),
-        cpal::SampleFormat::I32 => build_in::<i32>(dev, &sc, dev_ch, strip_ch, prod, shared),
-        cpal::SampleFormat::U16 => build_in::<u16>(dev, &sc, dev_ch, strip_ch, prod, shared),
+        cpal::SampleFormat::F32 => build_in::<f32>(dev, &sc, dev_ch, strip, strip_ch, prod, shared),
+        cpal::SampleFormat::I16 => build_in::<i16>(dev, &sc, dev_ch, strip, strip_ch, prod, shared),
+        cpal::SampleFormat::I32 => build_in::<i32>(dev, &sc, dev_ch, strip, strip_ch, prod, shared),
+        cpal::SampleFormat::U16 => build_in::<u16>(dev, &sc, dev_ch, strip, strip_ch, prod, shared),
         f => return Err(format!("unsupported sample format {f:?}")),
     }?;
     Ok((stream, cons, sr, dev_ch))
 }
 
-fn build_in<T>(dev: &cpal::Device, sc: &cpal::StreamConfig, dev_ch: usize, strip_ch: usize, mut prod: Producer, shared: Arc<Shared>) -> Result<cpal::Stream, String>
+fn build_in<T>(dev: &cpal::Device, sc: &cpal::StreamConfig, dev_ch: usize, strip: usize, strip_ch: usize, mut prod: Producer, shared: Arc<Shared>) -> Result<cpal::Stream, String>
 where
     T: SizedSample + Send + 'static,
     f32: FromSample<T>,
 {
     let mut tmp = vec![0.0f32; 16384 * strip_ch];
+    let (sh, dev_sr) = (shared.clone(), sc.sample_rate.0);
     dev.build_input_stream(
         sc,
         move |data: &[T], _: &cpal::InputCallbackInfo| {
             let frames = (data.len() / dev_ch).min(16384);
+            latency::store(&sh.latency.in_period[strip], frames, dev_sr);
             for i in 0..frames {
                 let f = &data[i * dev_ch..(i + 1) * dev_ch];
                 for c in 0..strip_ch {
@@ -680,7 +691,7 @@ where
 
 type OutputOpen = (cpal::Stream, Producer, u32, usize);
 
-fn open_output(dev: &cpal::Device, engine_sr: u32, latency: usize, shared: Arc<Shared>) -> Result<OutputOpen, String> {
+fn open_output(dev: &cpal::Device, bus: usize, engine_sr: u32, latency: usize, shared: Arc<Shared>) -> Result<OutputOpen, String> {
     let cfg = dev.default_output_config().map_err(|e| e.to_string())?;
     let sr = cfg.sample_rate().0;
     let dev_ch = cfg.channels() as usize;
@@ -689,25 +700,29 @@ fn open_output(dev: &cpal::Device, engine_sr: u32, latency: usize, shared: Arc<S
     let reader = AdaptiveReader::new(cons, ch, engine_sr as f64 / sr as f64, latency);
     let sc = cfg.config();
     let stream = match cfg.sample_format() {
-        cpal::SampleFormat::F32 => build_out::<f32>(dev, &sc, dev_ch, reader, shared),
-        cpal::SampleFormat::I16 => build_out::<i16>(dev, &sc, dev_ch, reader, shared),
-        cpal::SampleFormat::I32 => build_out::<i32>(dev, &sc, dev_ch, reader, shared),
-        cpal::SampleFormat::U16 => build_out::<u16>(dev, &sc, dev_ch, reader, shared),
+        cpal::SampleFormat::F32 => build_out::<f32>(dev, &sc, dev_ch, bus, engine_sr, reader, shared),
+        cpal::SampleFormat::I16 => build_out::<i16>(dev, &sc, dev_ch, bus, engine_sr, reader, shared),
+        cpal::SampleFormat::I32 => build_out::<i32>(dev, &sc, dev_ch, bus, engine_sr, reader, shared),
+        cpal::SampleFormat::U16 => build_out::<u16>(dev, &sc, dev_ch, bus, engine_sr, reader, shared),
         f => return Err(format!("unsupported sample format {f:?}")),
     }?;
     Ok((stream, prod, sr, dev_ch))
 }
 
-fn build_out<T>(dev: &cpal::Device, sc: &cpal::StreamConfig, dev_ch: usize, mut reader: AdaptiveReader, shared: Arc<Shared>) -> Result<cpal::Stream, String>
+fn build_out<T>(dev: &cpal::Device, sc: &cpal::StreamConfig, dev_ch: usize, bus: usize, engine_sr: u32, mut reader: AdaptiveReader, shared: Arc<Shared>) -> Result<cpal::Stream, String>
 where
     T: SizedSample + FromSample<f32> + Send + 'static,
 {
     let ch = reader.channels();
     let mut tmp = vec![0.0f32; 16384 * ch];
+    let (sh, dev_sr) = (shared.clone(), sc.sample_rate.0);
     dev.build_output_stream(
         sc,
         move |data: &mut [T], _: &cpal::OutputCallbackInfo| {
             let frames = (data.len() / dev_ch).min(16384);
+            // The ring holds frames at the engine rate (the mixer is its producer).
+            latency::store(&sh.latency.out_queue[bus], reader.fill_frames(), engine_sr);
+            latency::store(&sh.latency.out_period[bus], frames, dev_sr);
             reader.read(&mut tmp, frames);
             for i in 0..frames {
                 for c in 0..dev_ch {
@@ -1095,6 +1110,14 @@ mod master_tests {
     fn running_master_keeps_core() {
         let slot: CoreSlot = Arc::new(Mutex::new(None));
         assert!(take_back_unstarted(&slot, "device busy").is_none());
+    }
+
+    /// Each render pass publishes the master period for the Latency Monitor.
+    #[test]
+    fn render_publishes_master_period() {
+        let mut c = core();
+        render_chunked(&mut c, INTERNAL_SR as usize / 100, |_, _, _| {});
+        assert_eq!(latency::ms(&c.shared.latency.master_period), 10.0);
     }
 
     /// The fallback the caller applies: the returned core drives the internal clock.
