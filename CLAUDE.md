@@ -16,4 +16,5 @@ Rust desktop audio mixer for Windows (clean-room Voicemeeter Banana rebuild). Fe
 
 ## Refactor plan (agreed)
 Phases, in order: 0 fix GUI params clobber race (`gui/mod.rs` write-back of the whole `MixParams`) · 1 characterization tests (golden mixer output, settings XML fixture) · 2 break module cycles (settings↔midi, settings↔vban, engine↔recorder) and split mixed I/O modules · 3 split `Engine::start` and unify WASAPI/ASIO/internal master rendering with one fallback (also fixes silent failure when the WASAPI master `play()` fails) · 4 extract a `Session` struct from `App` with a single `request_restart()` · 5 split `gui/mod.rs` into strip/bus/player/topbar/help · 6 (optional) two-crate workspace.
+Full details with file references: `docs/REFACTOR_PLAN.md`.
 Not doing: public AudioHost/Network/MidiHost traits, DTOs/use-case objects, many crates, dyn dispatch in the render path.
