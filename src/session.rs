@@ -2,10 +2,11 @@
 //! lists, with a single coalesced path for engine restarts. The GUI owns one `Session` and
 //! keeps only its own view state.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicIsize, Ordering};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
+use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 use parking_lot::Mutex;
@@ -14,8 +15,9 @@ use crate::engine::{list_asio, list_devices, Engine, Shared};
 use crate::hotkey::HotkeyRuntime;
 use crate::midi::{self, LearnState, MidiMap, MidiRuntime};
 use crate::options::AppOptions;
-use crate::script::Effect;
-use crate::settings::{DeviceRef, Settings, DEV_WDM};
+use crate::recorder::{self, RecorderJob, SEEK_SECONDS};
+use crate::script::{self, Effect, TapeCmd};
+use crate::settings::{self, DeviceRef, Settings, DEV_WDM};
 
 pub struct Session {
     pub settings: Settings,
@@ -37,13 +39,20 @@ pub struct Session {
     pub console_log: Vec<String>,
     text_tx: Sender<String>,
     /// VBAN-TEXT commands received by the engine.
-    pub text_rx: Receiver<String>,
+    text_rx: Receiver<String>,
     fx_tx: Sender<Effect>,
     /// Script effects of MIDI-mapped controls.
-    pub fx_rx: Receiver<Effect>,
+    fx_rx: Receiver<Effect>,
     wake: Arc<dyn Fn() + Send + Sync>,
+    recorder_job: Option<RecorderJob>,
+    loader: Option<JoinHandle<Result<(String, Vec<f32>, bool), String>>>,
     restart_pending: bool,
     restart_at: Option<Instant>,
+    last_autosave: Instant,
+    /// An error for the user (title, text); the GUI takes it and shows it.
+    pub message: Option<(String, String)>,
+    /// A script asked for "Reset Settings"; the GUI takes it and asks for confirmation.
+    pub reset_requested: bool,
 }
 
 impl Session {
@@ -73,8 +82,13 @@ impl Session {
             fx_tx,
             fx_rx,
             wake,
+            recorder_job: None,
+            loader: None,
             restart_pending: false,
             restart_at: None,
+            last_autosave: Instant::now(),
+            message: None,
+            reset_requested: false,
         }
     }
 
@@ -93,15 +107,15 @@ impl Session {
         }
     }
 
-    /// Restart the engine on the next `poll_restart`; any number of requests before then
-    /// cause a single restart.
+    /// Restart the engine on the next `tick`; any number of requests before then cause a
+    /// single restart.
     pub fn request_restart(&mut self) {
         self.restart_pending = true;
     }
 
     /// Run the pending restarts: the delayed ones after a device failure or a driver reset
     /// request, then the one asked for with `request_restart`.
-    pub fn poll_restart(&mut self) {
+    fn poll_restart(&mut self) {
         // Device failure → auto restart (menu "Auto Restart Audio Engine").
         if self.shared.device_error.load(Ordering::Relaxed) && self.options.auto_restart && self.restart_at.is_none() {
             self.restart_at = Some(Instant::now() + Duration::from_secs(2));
@@ -120,6 +134,39 @@ impl Session {
         if self.restart_pending {
             self.restart_pending = false;
             self.restart_engine();
+        }
+    }
+
+    /// Poll the background work (call once per GUI frame): VBAN-TEXT commands, MIDI effects,
+    /// the tape file loader and recorder, pending restarts and the periodic autosave.
+    pub fn tick(&mut self) {
+        while let Ok(t) = self.text_rx.try_recv() {
+            self.run_script(&t, "vban");
+        }
+        while let Ok(e) = self.fx_rx.try_recv() {
+            self.handle_effect(e);
+        }
+        if self.loader.as_ref().map(|h| h.is_finished()).unwrap_or(false) {
+            match self.loader.take().unwrap().join() {
+                Ok(Ok((name, data, play))) => {
+                    recorder::set_loaded_file(&self.shared.tape, &name, data, play);
+                    *self.shared.tape.status.lock() = String::new();
+                }
+                Ok(Err(e)) => {
+                    *self.shared.tape.status.lock() = e.clone();
+                    self.message = Some(("Tape".into(), e));
+                }
+                Err(_) => {}
+            }
+        }
+        if self.recorder_job.as_ref().map(|j| j.is_finished()).unwrap_or(false) {
+            self.finish_recording();
+        }
+        self.poll_restart();
+        // Periodic autosave of the last settings (crash safety).
+        if self.last_autosave.elapsed() > Duration::from_secs(30) {
+            self.last_autosave = Instant::now();
+            let _ = self.save_settings_to(&settings::last_settings_path());
         }
     }
 
@@ -212,5 +259,139 @@ impl Session {
     pub fn set_bus_device(&mut self, bus: usize, name: Option<String>) {
         self.settings.device.outputs[bus] = name.map(|n| DeviceRef { kind: DEV_WDM, name: n });
         self.request_restart();
+    }
+
+    // ------------------------------------------------------------ tape
+
+    pub fn tape_cmd(&mut self, c: TapeCmd) {
+        let t = self.shared.tape.clone();
+        match c {
+            TapeCmd::Play => {
+                if t.has_file() {
+                    if t.pos.load(Ordering::Relaxed) >= t.len.load(Ordering::Relaxed) {
+                        t.pos.store(0, Ordering::Relaxed);
+                    }
+                    t.playing.store(true, Ordering::Relaxed);
+                }
+            }
+            TapeCmd::Replay => {
+                t.pos.store(0, Ordering::Relaxed);
+                t.playing.store(t.has_file(), Ordering::Relaxed);
+            }
+            TapeCmd::Stop => {
+                let was_active = t.playing.load(Ordering::Relaxed) || self.recorder_job.is_some();
+                t.playing.store(false, Ordering::Relaxed);
+                self.finish_recording();
+                if !was_active {
+                    t.pos.store(0, Ordering::Relaxed);
+                }
+            }
+            TapeCmd::Record => {
+                if self.recorder_job.is_some() {
+                    let p = t.rec_paused.load(Ordering::Relaxed);
+                    t.rec_paused.store(!p, Ordering::Relaxed);
+                } else {
+                    let sr = self.shared.status.lock().sample_rate.max(8000);
+                    match RecorderJob::start(&t, &self.settings.recorder, sr) {
+                        Ok(job) => self.recorder_job = Some(job),
+                        Err(e) => self.message = Some(("Recorder".into(), e)),
+                    }
+                }
+            }
+            TapeCmd::Pause => {
+                if self.recorder_job.is_some() {
+                    let p = t.rec_paused.load(Ordering::Relaxed);
+                    t.rec_paused.store(!p, Ordering::Relaxed);
+                }
+            }
+            TapeCmd::Rew => t.seek_by(-SEEK_SECONDS),
+            TapeCmd::Ff => t.seek_by(SEEK_SECONDS),
+        }
+    }
+
+    pub fn finish_recording(&mut self) {
+        if let Some(job) = self.recorder_job.take() {
+            self.shared.tape.recording.store(false, Ordering::Relaxed);
+            match job.finish() {
+                Ok(files) => {
+                    if let Some(f) = files.first() {
+                        self.settings.recorder.last_file = f.to_string_lossy().into();
+                        *self.shared.tape.status.lock() = format!("Saved {}", f.display());
+                        // Like the original: the new recording becomes the loaded cassette.
+                        if !self.settings.recorder.multitrack {
+                            self.load_tape_file(f.clone(), false);
+                        }
+                    }
+                }
+                Err(e) => self.message = Some(("Recorder".into(), e)),
+            }
+        }
+    }
+
+    pub fn load_tape_file(&mut self, path: PathBuf, play: bool) {
+        let sr = self.shared.status.lock().sample_rate.max(8000);
+        *self.shared.tape.status.lock() = format!("Loading {}...", path.display());
+        self.loader = Some(std::thread::spawn(move || {
+            let data = recorder::load_audio_file(&path, sr)?;
+            let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+            Ok((name, data, play))
+        }));
+    }
+
+    // ------------------------------------------------------------ effects
+
+    pub fn run_script(&mut self, text: &str, source: &str) {
+        let result = {
+            let mut p = self.shared.params.lock();
+            let mut copy = *p;
+            let r = script::execute(text, &mut copy, &mut self.settings.labels);
+            if r.is_ok() {
+                if self.options.limit_remote_gain && source != "console" {
+                    for s in copy.strips.iter_mut() {
+                        s.gain_db = s.gain_db.min(0.0);
+                    }
+                    for b in copy.buses.iter_mut() {
+                        b.gain_db = b.gain_db.min(0.0);
+                    }
+                }
+                *p = copy;
+            }
+            r
+        };
+        match result {
+            Ok(fx) => {
+                self.console_log.push(format!("[{source}] ok: {}", text.trim()));
+                for e in fx {
+                    self.handle_effect(e);
+                }
+            }
+            Err(e) => self.console_log.push(format!("[{source}] error: {e}")),
+        }
+        if self.console_log.len() > 500 {
+            self.console_log.drain(..100);
+        }
+    }
+
+    fn handle_effect(&mut self, e: Effect) {
+        match e {
+            Effect::Tape(c) => self.tape_cmd(c),
+            Effect::TapeLoad(p) => self.load_tape_file(PathBuf::from(p), false),
+            Effect::StripDevice { strip, name, .. } => self.set_strip_device(strip, (!name.is_empty()).then_some(name)),
+            Effect::BusDevice { bus, name, .. } => self.set_bus_device(bus, (!name.is_empty()).then_some(name)),
+            Effect::Restart => self.request_restart(),
+            Effect::Shutdown => self.console_log.push("[script] Command.Shutdown requested".into()),
+            Effect::Show => {}
+            Effect::Lock(b) => self.options.lock_gui = b,
+            Effect::SaveSettings(p) => {
+                if let Err(e) = self.save_settings_to(Path::new(&p)) {
+                    self.console_log.push(format!("save failed: {e}"));
+                }
+            }
+            Effect::LoadSettings(p) => match Settings::load(Path::new(&p)) {
+                Ok(s) => self.apply_settings(s),
+                Err(e) => self.console_log.push(format!("load failed: {e}")),
+            },
+            Effect::Reset => self.reset_requested = true,
+        }
     }
 }

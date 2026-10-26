@@ -28,6 +28,7 @@ pub(crate) fn show(app: &mut App, ctx: &egui::Context, p: &mut MixParams) {
     console(app, ctx);
     about(app, ctx);
     rename(app, ctx);
+    app.take_session_notices();
     message(app, ctx);
     confirm_reset(app, ctx);
     hotkey_dlg(app, ctx);
@@ -784,7 +785,7 @@ fn console(app: &mut App, ctx: &egui::Context) {
         let run = ui.button("Run  (Ctrl+Enter)").clicked() || (r.has_focus() && ui.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Enter)));
         if run {
             let t = app.console_input.clone();
-            app.run_script(&t, "console");
+            app.session.run_script(&t, "console");
         }
         ui.separator();
         egui::ScrollArea::vertical().max_height(220.0).stick_to_bottom(true).show(ui, |ui| {

@@ -8,8 +8,7 @@ mod widgets;
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
-use std::thread::JoinHandle;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use eframe::egui::{self, Color32, RichText, Rounding, Sense, Stroke, Ui, Vec2};
 
@@ -17,8 +16,7 @@ use rustbus::engine::mixer::Meters;
 use rustbus::hotkey;
 use rustbus::options::AppOptions;
 use rustbus::params::*;
-use rustbus::recorder::{self, RecorderJob, SEEK_SECONDS};
-use rustbus::script::{self, Effect, TapeCmd};
+use rustbus::script::TapeCmd;
 use rustbus::session::Session;
 use rustbus::settings::{self, DeviceRef, Settings, DEV_ASIO};
 
@@ -64,14 +62,11 @@ pub(crate) struct Dialogs {
 
 pub(crate) struct App {
     pub session: Session,
-    recorder_job: Option<RecorderJob>,
-    loader: Option<JoinHandle<Result<(String, Vec<f32>, bool), String>>>,
     pub dlg: Dialogs,
     disp_strips: [[f32; MAX_CH]; NUM_STRIPS],
     disp_buses: [[f32; MAX_CH]; NUM_BUSES],
     help: String,
     pub console_input: String,
-    last_autosave: Instant,
     pub clipboard_strip: Option<StripParams>,
     pub preset_with_devices: bool,
     pub preset_names: Vec<Option<(String, String)>>,
@@ -118,14 +113,11 @@ impl App {
         session.refresh_midi_ports();
         let mut app = App {
             session,
-            recorder_job: None,
-            loader: None,
             dlg: Dialogs::default(),
             disp_strips: [[0.0; MAX_CH]; NUM_STRIPS],
             disp_buses: [[0.0; MAX_CH]; NUM_BUSES],
             help: String::new(),
             console_input: String::new(),
-            last_autosave: Instant::now(),
             clipboard_strip: None,
             preset_with_devices: false,
             preset_names: Vec::new(),
@@ -237,169 +229,9 @@ impl App {
         self.preset_names = rustbus::presets::list().into_iter().map(|p| p.map(|p| (p.name, p.timestamp))).collect();
     }
 
-    // ------------------------------------------------------------ tape
-
-    pub fn tape_cmd(&mut self, c: TapeCmd) {
-        let t = self.session.shared.tape.clone();
-        match c {
-            TapeCmd::Play => {
-                if t.has_file() {
-                    if t.pos.load(Ordering::Relaxed) >= t.len.load(Ordering::Relaxed) {
-                        t.pos.store(0, Ordering::Relaxed);
-                    }
-                    t.playing.store(true, Ordering::Relaxed);
-                }
-            }
-            TapeCmd::Replay => {
-                t.pos.store(0, Ordering::Relaxed);
-                t.playing.store(t.has_file(), Ordering::Relaxed);
-            }
-            TapeCmd::Stop => {
-                let was_active = t.playing.load(Ordering::Relaxed) || self.recorder_job.is_some();
-                t.playing.store(false, Ordering::Relaxed);
-                self.finish_recording();
-                if !was_active {
-                    t.pos.store(0, Ordering::Relaxed);
-                }
-            }
-            TapeCmd::Record => {
-                if self.recorder_job.is_some() {
-                    let p = t.rec_paused.load(Ordering::Relaxed);
-                    t.rec_paused.store(!p, Ordering::Relaxed);
-                } else {
-                    let sr = self.session.shared.status.lock().sample_rate.max(8000);
-                    match RecorderJob::start(&t, &self.session.settings.recorder, sr) {
-                        Ok(job) => self.recorder_job = Some(job),
-                        Err(e) => self.dlg.message = Some(("Recorder".into(), e)),
-                    }
-                }
-            }
-            TapeCmd::Pause => {
-                if self.recorder_job.is_some() {
-                    let p = t.rec_paused.load(Ordering::Relaxed);
-                    t.rec_paused.store(!p, Ordering::Relaxed);
-                }
-            }
-            TapeCmd::Rew => t.seek_by(-SEEK_SECONDS),
-            TapeCmd::Ff => t.seek_by(SEEK_SECONDS),
-        }
-    }
-
-    fn finish_recording(&mut self) {
-        if let Some(job) = self.recorder_job.take() {
-            self.session.shared.tape.recording.store(false, Ordering::Relaxed);
-            match job.finish() {
-                Ok(files) => {
-                    if let Some(f) = files.first() {
-                        self.session.settings.recorder.last_file = f.to_string_lossy().into();
-                        *self.session.shared.tape.status.lock() = format!("Saved {}", f.display());
-                        // Like the original: the new recording becomes the loaded cassette.
-                        if !self.session.settings.recorder.multitrack {
-                            self.load_tape_file(f.clone(), false);
-                        }
-                    }
-                }
-                Err(e) => self.dlg.message = Some(("Recorder".into(), e)),
-            }
-        }
-    }
-
-    pub fn load_tape_file(&mut self, path: PathBuf, play: bool) {
-        let sr = self.session.shared.status.lock().sample_rate.max(8000);
-        *self.session.shared.tape.status.lock() = format!("Loading {}...", path.display());
-        self.loader = Some(std::thread::spawn(move || {
-            let data = recorder::load_audio_file(&path, sr)?;
-            let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
-            Ok((name, data, play))
-        }));
-    }
-
-    // ------------------------------------------------------------ effects
-
-    pub fn run_script(&mut self, text: &str, source: &str) {
-        let result = {
-            let mut p = self.session.shared.params.lock();
-            let mut copy = *p;
-            let r = script::execute(text, &mut copy, &mut self.session.settings.labels);
-            if r.is_ok() {
-                if self.session.options.limit_remote_gain && source != "console" {
-                    for s in copy.strips.iter_mut() {
-                        s.gain_db = s.gain_db.min(0.0);
-                    }
-                    for b in copy.buses.iter_mut() {
-                        b.gain_db = b.gain_db.min(0.0);
-                    }
-                }
-                *p = copy;
-            }
-            r
-        };
-        match result {
-            Ok(fx) => {
-                self.session.console_log.push(format!("[{source}] ok: {}", text.trim()));
-                for e in fx {
-                    self.handle_effect(e);
-                }
-            }
-            Err(e) => self.session.console_log.push(format!("[{source}] error: {e}")),
-        }
-        if self.session.console_log.len() > 500 {
-            self.session.console_log.drain(..100);
-        }
-    }
-
-    fn handle_effect(&mut self, e: Effect) {
-        match e {
-            Effect::Tape(c) => self.tape_cmd(c),
-            Effect::TapeLoad(p) => self.load_tape_file(PathBuf::from(p), false),
-            Effect::StripDevice { strip, name, .. } => self.session.set_strip_device(strip, (!name.is_empty()).then_some(name)),
-            Effect::BusDevice { bus, name, .. } => self.session.set_bus_device(bus, (!name.is_empty()).then_some(name)),
-            Effect::Restart => self.session.request_restart(),
-            Effect::Shutdown => self.session.console_log.push("[script] Command.Shutdown requested".into()),
-            Effect::Show => {}
-            Effect::Lock(b) => self.session.options.lock_gui = b,
-            Effect::SaveSettings(p) => {
-                if let Err(e) = self.session.save_settings_to(std::path::Path::new(&p)) {
-                    self.session.console_log.push(format!("save failed: {e}"));
-                }
-            }
-            Effect::LoadSettings(p) => match Settings::load(std::path::Path::new(&p)) {
-                Ok(s) => self.session.apply_settings(s),
-                Err(e) => self.session.console_log.push(format!("load failed: {e}")),
-            },
-            Effect::Reset => self.dlg.confirm_reset = true,
-        }
-    }
-
     fn poll_background(&mut self, ctx: &egui::Context) {
-        while let Ok(t) = self.session.text_rx.try_recv() {
-            self.run_script(&t, "vban");
-        }
-        while let Ok(e) = self.session.fx_rx.try_recv() {
-            self.handle_effect(e);
-        }
-        if self.loader.as_ref().map(|h| h.is_finished()).unwrap_or(false) {
-            match self.loader.take().unwrap().join() {
-                Ok(Ok((name, data, play))) => {
-                    recorder::set_loaded_file(&self.session.shared.tape, &name, data, play);
-                    *self.session.shared.tape.status.lock() = String::new();
-                }
-                Ok(Err(e)) => {
-                    *self.session.shared.tape.status.lock() = e.clone();
-                    self.dlg.message = Some(("Tape".into(), e));
-                }
-                Err(_) => {}
-            }
-        }
-        if self.recorder_job.as_ref().map(|j| j.is_finished()).unwrap_or(false) {
-            self.finish_recording();
-        }
-        self.session.poll_restart();
-        // Periodic autosave of the last settings (crash safety).
-        if self.last_autosave.elapsed() > Duration::from_secs(30) {
-            self.last_autosave = Instant::now();
-            let _ = self.session.save_settings_to(&settings::last_settings_path());
-        }
+        self.session.tick();
+        self.take_session_notices();
         // Meters.
         let m = &self.session.shared.meters;
         for s in 0..NUM_STRIPS {
@@ -415,6 +247,16 @@ impl App {
             }
         }
         ctx.request_repaint_after(Duration::from_millis(33));
+    }
+
+    /// Show what the session asked the user about (an error message, the reset prompt).
+    pub fn take_session_notices(&mut self) {
+        if let Some(m) = self.session.message.take() {
+            self.dlg.message = Some(m);
+        }
+        if std::mem::take(&mut self.session.reset_requested) {
+            self.dlg.confirm_reset = true;
+        }
     }
 
     fn shortcuts(&mut self, ctx: &egui::Context) {
@@ -1131,7 +973,7 @@ fn menu_header(ui: &mut Ui, title: &str) {
                     ui.spacing_mut().item_spacing.x = 6.0;
                     let r = transport_button(ui, false, |ui, c, col| icon_skip(ui, c, col, false)).on_hover_text("Back 5 s");
                     if r.clicked() {
-                        self.tape_cmd(TapeCmd::Rew);
+                        self.session.tape_cmd(TapeCmd::Rew);
                     }
                     self.hover_help(&r, "TAPE_REW");
                     let r = if playing {
@@ -1143,24 +985,24 @@ fn menu_header(ui: &mut Ui, title: &str) {
                         if playing {
                             t.playing.store(false, Ordering::Relaxed);
                         } else {
-                            self.tape_cmd(TapeCmd::Play);
+                            self.session.tape_cmd(TapeCmd::Play);
                         }
                     }
                     self.hover_help(&r, "TAPE_PLAY");
                     let r = transport_button(ui, false, |ui, c, col| icon_stop(ui, c, col)).on_hover_text("Stop (again: back to start)");
                     if r.clicked() {
-                        self.tape_cmd(TapeCmd::Stop);
+                        self.session.tape_cmd(TapeCmd::Stop);
                     }
                     self.hover_help(&r, "TAPE_STOP");
                     let r = transport_button(ui, false, |ui, c, col| icon_skip(ui, c, col, true)).on_hover_text("Forward 5 s");
                     if r.clicked() {
-                        self.tape_cmd(TapeCmd::Ff);
+                        self.session.tape_cmd(TapeCmd::Ff);
                     }
                     self.hover_help(&r, "TAPE_FF");
                     let paused = rec && t.rec_paused.load(Ordering::Relaxed);
                     let r = rec_button(ui, rec, if paused { "Paused" } else { "Rec" });
                     if r.clicked() {
-                        self.tape_cmd(TapeCmd::Record);
+                        self.session.tape_cmd(TapeCmd::Record);
                     }
                     self.hover_help(&r, "TAPE_REC");
                 });
@@ -1197,7 +1039,7 @@ fn menu_header(ui: &mut Ui, title: &str) {
                 if resp.clicked() {
                     if let Some(f) = rfd::FileDialog::new().add_filter("Audio (wav, bwf)", &["wav", "bwf"]).set_title("Select Audio File").pick_file() {
                         let play = !self.session.settings.recorder.dont_play;
-                        self.load_tape_file(f, play);
+                        self.session.load_tape_file(f, play);
                     }
                 }
                 if resp.secondary_clicked() {
@@ -1316,7 +1158,7 @@ impl eframe::App for App {
     }
 
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
-        self.finish_recording();
+        self.session.finish_recording();
         let s = self.session.snapshot_settings();
         let _ = s.save(&settings::last_settings_path());
         let _ = settings::rotate_daily_backup(&s.to_xml());
