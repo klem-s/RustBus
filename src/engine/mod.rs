@@ -320,82 +320,9 @@ impl Engine {
             direct_off: 0,
         };
 
-        // ---- inputs (strips)
-        for s in 0..NUM_STRIPS {
-            let Some(d) = &device.inputs[s] else { continue };
-            if d.kind == DEV_ASIO {
-                match &a1_asio {
-                    Some(a) if a.info.driver == d.name && s < NUM_HW_STRIPS => {
-                        let src = device.asio_patch[s].map(|c| c.max(0) as usize);
-                        let ins = &a.info.inputs;
-                        if src.iter().all(|&c| c < ins.len()) {
-                            core.direct.push((s, src));
-                            let names = if src[0] == src[1] { ins[src[0]].clone() } else { format!("{} + {}", ins[src[0]], ins[src[1]]) };
-                            status.points[s] = Some(format!("ASIO: {} ({names})", d.name));
-                        } else {
-                            status.errors.push(format!("Failed to Open Input Device: {}\nASIO input channel not available.", d.name));
-                        }
-                    }
-                    _ => status.errors.push(format!("Failed to Open Input Device: {}\nASIO inputs need A1 on the same ASIO driver.", d.name)),
-                }
-                continue;
-            }
-            let Some(dev) = find_device(true, &d.name) else {
-                status.errors.push(format!("Failed to Open Input Device: {}", d.name));
-                continue;
-            };
-            let strip_ch = strip_channels(s);
-            match open_input(&dev, strip_ch, shared.clone()) {
-                Ok((stream, cons, dev_sr, dev_ch)) => {
-                    core.inputs.push((s, AdaptiveReader::new(cons, strip_ch, dev_sr as f64 / sr as f64, latency * dev_sr as usize / sr as usize)));
-                    status.points[s] = Some(format!("WDM: {} ({dev_sr} Hz, {dev_ch} ch)", d.name));
-                    streams.push(stream);
-                }
-                Err(e) => status.errors.push(format!("Failed to Open Input Device: {} ({e})", d.name)),
-            }
-        }
-
-        // ---- outputs A2..B2
-        for b in 1..NUM_BUSES {
-            let Some(d) = &device.outputs[b] else { continue };
-            let Some(dev) = find_device(false, &d.name) else {
-                status.errors.push(format!("Failed to Open Output Device: {}", d.name));
-                continue;
-            };
-            match open_output(&dev, sr, latency, shared.clone()) {
-                Ok((stream, prod, dev_sr, dev_ch)) => {
-                    core.outputs.push((b, dev_ch.min(MAX_CH), prod));
-                    status.points[NUM_STRIPS + b] = Some(format!("WDM: {} ({dev_sr} Hz, {dev_ch} ch)", d.name));
-                    streams.push(stream);
-                }
-                Err(e) => status.errors.push(format!("Failed to Open Output Device: {} ({e})", d.name)),
-            }
-        }
-
-        // ---- VBAN
-        let vcfg = vban;
-        let mut sinks = Vec::new();
-        let mut sources = Vec::new();
-        if vcfg.enabled {
-            for (i, s) in vcfg.inputs.iter().enumerate().filter(|(_, s)| s.enabled) {
-                let strip = s.strip.min(NUM_STRIPS - 1);
-                let ch = strip_channels(strip);
-                let (prod, cons) = ring(sr as usize * ch);
-                let target = 256 * (s.nq as usize + 2);
-                sinks.push(InSink { stream: i, channels: ch, prod });
-                core.vban_in.push((i, strip, AdaptiveReader::new(cons, ch, 1.0, target)));
-            }
-            for (i, s) in vcfg.outputs.iter().enumerate().filter(|(_, s)| s.enabled) {
-                let ch = s.channels.clamp(1, 8) as usize;
-                let (prod, cons) = ring(sr as usize * ch);
-                core.vban_out.push((s.bus.min(NUM_BUSES - 1), ch, prod));
-                sources.push(OutSource { stream: i, cons });
-            }
-        }
-        let vban = VbanRuntime::start(vcfg, sr, sinks, sources, shared.vban_stats.clone(), text_tx, wake.clone());
-        if shared.vban_stats.port_error.load(Ordering::Relaxed) {
-            status.errors.push("VBAN UDP port is already used by another application.\nVBAN outgoing stream should work, but\nincoming VBAN streams could not be received.".into());
-        }
+        wire_inputs(device, a1_asio.as_ref().map(|a| &a.info), latency, &mut core, &mut status, &mut streams);
+        wire_outputs(device, latency, &mut core, &mut status, &mut streams);
+        let vban = wire_vban(vban, &mut core, &mut status, text_tx, wake.clone());
 
         // ---- start the clock
         let mut clock = None;
@@ -491,6 +418,91 @@ impl Drop for Engine {
     fn drop(&mut self) {
         self.stop();
     }
+}
+
+/// Open the strip inputs: WDM devices through rings, ASIO channels straight from A1's driver.
+fn wire_inputs(device: &DeviceConfig, a1_asio: Option<&asio::AsioInfo>, latency: usize, core: &mut Core, status: &mut EngineStatus, streams: &mut Vec<cpal::Stream>) {
+    for s in 0..NUM_STRIPS {
+        let Some(d) = &device.inputs[s] else { continue };
+        if d.kind == DEV_ASIO {
+            match a1_asio {
+                Some(a) if a.driver == d.name && s < NUM_HW_STRIPS => {
+                    let src = device.asio_patch[s].map(|c| c.max(0) as usize);
+                    let ins = &a.inputs;
+                    if src.iter().all(|&c| c < ins.len()) {
+                        core.direct.push((s, src));
+                        let names = if src[0] == src[1] { ins[src[0]].clone() } else { format!("{} + {}", ins[src[0]], ins[src[1]]) };
+                        status.points[s] = Some(format!("ASIO: {} ({names})", d.name));
+                    } else {
+                        status.errors.push(format!("Failed to Open Input Device: {}\nASIO input channel not available.", d.name));
+                    }
+                }
+                _ => status.errors.push(format!("Failed to Open Input Device: {}\nASIO inputs need A1 on the same ASIO driver.", d.name)),
+            }
+            continue;
+        }
+        let Some(dev) = find_device(true, &d.name) else {
+            status.errors.push(format!("Failed to Open Input Device: {}", d.name));
+            continue;
+        };
+        let strip_ch = strip_channels(s);
+        match open_input(&dev, strip_ch, core.shared.clone()) {
+            Ok((stream, cons, dev_sr, dev_ch)) => {
+                core.inputs.push((s, AdaptiveReader::new(cons, strip_ch, dev_sr as f64 / core.sr as f64, latency * dev_sr as usize / core.sr as usize)));
+                status.points[s] = Some(format!("WDM: {} ({dev_sr} Hz, {dev_ch} ch)", d.name));
+                streams.push(stream);
+            }
+            Err(e) => status.errors.push(format!("Failed to Open Input Device: {} ({e})", d.name)),
+        }
+    }
+}
+
+/// Open the bus outputs A2..B3 (A1 is the master).
+fn wire_outputs(device: &DeviceConfig, latency: usize, core: &mut Core, status: &mut EngineStatus, streams: &mut Vec<cpal::Stream>) {
+    for b in 1..NUM_BUSES {
+        let Some(d) = &device.outputs[b] else { continue };
+        let Some(dev) = find_device(false, &d.name) else {
+            status.errors.push(format!("Failed to Open Output Device: {}", d.name));
+            continue;
+        };
+        match open_output(&dev, core.sr, latency, core.shared.clone()) {
+            Ok((stream, prod, dev_sr, dev_ch)) => {
+                core.outputs.push((b, dev_ch.min(MAX_CH), prod));
+                status.points[NUM_STRIPS + b] = Some(format!("WDM: {} ({dev_sr} Hz, {dev_ch} ch)", d.name));
+                streams.push(stream);
+            }
+            Err(e) => status.errors.push(format!("Failed to Open Output Device: {} ({e})", d.name)),
+        }
+    }
+}
+
+/// Create the VBAN rings and start the UDP threads.
+fn wire_vban(vcfg: &VbanConfig, core: &mut Core, status: &mut EngineStatus, text_tx: Sender<String>, wake: Arc<dyn Fn() + Send + Sync>) -> VbanRuntime {
+    let sr = core.sr;
+    let shared = core.shared.clone();
+    let mut sinks = Vec::new();
+    let mut sources = Vec::new();
+    if vcfg.enabled {
+        for (i, s) in vcfg.inputs.iter().enumerate().filter(|(_, s)| s.enabled) {
+            let strip = s.strip.min(NUM_STRIPS - 1);
+            let ch = strip_channels(strip);
+            let (prod, cons) = ring(sr as usize * ch);
+            let target = 256 * (s.nq as usize + 2);
+            sinks.push(InSink { stream: i, channels: ch, prod });
+            core.vban_in.push((i, strip, AdaptiveReader::new(cons, ch, 1.0, target)));
+        }
+        for (i, s) in vcfg.outputs.iter().enumerate().filter(|(_, s)| s.enabled) {
+            let ch = s.channels.clamp(1, 8) as usize;
+            let (prod, cons) = ring(sr as usize * ch);
+            core.vban_out.push((s.bus.min(NUM_BUSES - 1), ch, prod));
+            sources.push(OutSource { stream: i, cons });
+        }
+    }
+    let vban = VbanRuntime::start(vcfg, sr, sinks, sources, shared.vban_stats.clone(), text_tx, wake);
+    if shared.vban_stats.port_error.load(Ordering::Relaxed) {
+        status.errors.push("VBAN UDP port is already used by another application.\nVBAN outgoing stream should work, but\nincoming VBAN streams could not be received.".into());
+    }
+    vban
 }
 
 /// ASIO callback: render A1 in MAX_BLOCK chunks, feeding ASIO inputs straight to their strips.
