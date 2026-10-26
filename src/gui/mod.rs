@@ -60,6 +60,7 @@ pub(crate) struct Dialogs {
     pub message: Option<(String, String)>,
     pub confirm_reset: bool,
     pub hotkey: bool,
+    pub latency: bool,
 }
 
 pub(crate) struct App {

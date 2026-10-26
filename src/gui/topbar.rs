@@ -185,6 +185,7 @@ impl App {
             ("M.I.D.I. Mapping...\t[CTRL+3]", &mut self.dlg.midi),
             ("VBAN Options... (VB-Audio Network)\t[CTRL+1]", &mut self.dlg.vban),
             ("Command Console (parameter scripts)...", &mut self.dlg.console),
+            ("Latency Monitor...", &mut self.dlg.latency),
         ] {
             if ui.button(label).clicked() {
                 *flag = true;

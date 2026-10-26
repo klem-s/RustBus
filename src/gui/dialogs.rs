@@ -33,6 +33,7 @@ pub(crate) fn show(app: &mut App, ctx: &egui::Context, p: &mut MixParams) {
     message(app, ctx);
     confirm_reset(app, ctx);
     hotkey_dlg(app, ctx);
+    latency_dlg(app, ctx);
 }
 
 // ---------------------------------------------------------------- Mic hotkey
@@ -754,6 +755,100 @@ fn console(app: &mut App, ctx: &egui::Context) {
             }
         });
     });
+}
+
+// ---------------------------------------------------------------- Latency monitor
+
+/// Live latency of every open audio point, from the figures the audio threads publish.
+fn latency_dlg(app: &mut App, ctx: &egui::Context) {
+    use rustbus::engine::latency::ms;
+    if !app.dlg.latency {
+        return;
+    }
+    let st = app.session.status();
+    let shared = app.session.shared.clone();
+    let l = &shared.latency;
+    // Queues move by a device buffer on every callback: show a smoothed value.
+    let ema_id = egui::Id::new("latency-ema");
+    let mut ema: Vec<f32> = ctx.data_mut(|d| d.get_temp(ema_id)).unwrap_or_default();
+    let mut slot = 0;
+    let mut smooth = |v: f32| {
+        if ema.len() <= slot {
+            ema.push(v);
+        }
+        let e = &mut ema[slot];
+        *e = if *e == 0.0 || v == 0.0 { v } else { *e + (v - *e) * 0.1 };
+        slot += 1;
+        *e
+    };
+
+    let asio_ms = |samples: usize| st.asio.as_ref().map_or(0.0, |a| samples as f32 * 1000.0 / a.sample_rate.max(1) as f32);
+    let (asio_in, asio_out) = st.asio.as_ref().map_or((0.0, 0.0), |a| (asio_ms(a.latency_in), asio_ms(a.latency_out)));
+    let master = smooth(ms(&l.master_period));
+    // ASIO-reported latencies already include the buffer; WASAPI/internal: one period.
+    let a1_total = if asio_out > 0.0 { asio_out } else { master };
+
+    // (point, device, period, queued, driver, total)
+    let mut rows: Vec<(String, String, f32, f32, f32, f32)> = Vec::new();
+    rows.push(("A1 (master)".into(), st.master.clone(), master, 0.0, asio_out, a1_total));
+    let labels = &app.session.settings.labels;
+    for s in 0..NUM_STRIPS {
+        let Some(dev) = &st.points[s] else { continue };
+        let name = format!("{} → A1", labels.strip_display(s));
+        if dev.starts_with("ASIO") {
+            let input = if asio_in > 0.0 { asio_in } else { master };
+            rows.push((name, dev.clone(), master, 0.0, asio_in, input + a1_total));
+        } else {
+            let (period, queued) = (smooth(ms(&l.in_period[s])), smooth(ms(&l.in_queue[s])));
+            rows.push((name, dev.clone(), period, queued, 0.0, period + queued + a1_total));
+        }
+    }
+    let vban = &app.session.settings.vban;
+    if vban.enabled {
+        for (i, s) in vban.inputs.iter().enumerate().filter(|(_, s)| s.enabled) {
+            let queued = smooth(ms(&l.vban_queue[i]));
+            let dev = format!("VBAN in: {} ({})", s.name, if s.ip.is_empty() { "any" } else { &s.ip });
+            rows.push((format!("{} → A1", labels.strip_display(s.strip.min(NUM_STRIPS - 1))), dev, 0.0, queued, 0.0, queued + a1_total));
+        }
+    }
+    for b in 1..NUM_BUSES {
+        let Some(dev) = &st.points[NUM_STRIPS + b] else { continue };
+        let (period, queued) = (smooth(ms(&l.out_period[b])), smooth(ms(&l.out_queue[b])));
+        rows.push((format!("Mixer → {}", BUS_NAMES[b]), dev.clone(), period, queued, 0.0, period + queued));
+    }
+    ctx.data_mut(|d| d.insert_temp(ema_id, ema));
+
+    let fmt = |v: f32| if v > 0.0 { format!("{v:.1}") } else { "–".into() };
+    window!(app, ctx, latency, "Latency Monitor", |ui| {
+        ui.label(format!("Engine {} Hz · {}", st.sample_rate, st.master));
+        ui.add_space(4.0);
+        egui::Grid::new("latency").num_columns(6).striped(true).spacing([14.0, 6.0]).show(ui, |ui| {
+            for h in ["Path", "Device", "Period ms", "Queued ms", "Driver ms", "Total ms"] {
+                ui.label(RichText::new(h).strong());
+            }
+            ui.end_row();
+            for (point, dev, period, queued, driver, total) in &rows {
+                ui.label(point);
+                ui.label(RichText::new(dev).color(TEXT_DIM));
+                ui.label(fmt(*period));
+                ui.label(fmt(*queued));
+                ui.label(fmt(*driver));
+                ui.label(RichText::new(fmt(*total)).strong());
+            }
+        });
+        ui.add_space(6.0);
+        ui.label(
+            RichText::new(
+                "Period: device buffer per callback. Queued: audio waiting in the resampling ring. Driver: ASIO-reported latency (includes its buffer).
+                 Total is the estimated input → A1 output time, or mixer → device for buses. Windows/USB buffering below the driver is not visible and comes on top.",
+            )
+            .size(10.5)
+            .color(TEXT_DIM),
+        );
+    });
+    if app.dlg.latency {
+        ctx.request_repaint_after(std::time::Duration::from_millis(100));
+    }
 }
 
 fn about(app: &mut App, ctx: &egui::Context) {
