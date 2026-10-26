@@ -222,8 +222,7 @@ struct A1Plan {
 /// Decide the master clock from the probe result (no I/O).
 fn plan_a1(device: &DeviceConfig, probe: &A1Probe) -> A1Plan {
     let mut errors = Vec::new();
-    let bad_rate = |sr: u32| format!("Failed to Open Main Output Device (A1)
-Output A1 supports standard SampleRate only ({sr} Hz).");
+    let bad_rate = |sr: u32| format!("Failed to Open Main Output Device (A1)\nOutput A1 supports standard SampleRate only ({sr} Hz).");
     let (master, sr) = match probe {
         A1Probe::Unset => (A1Master::Internal, INTERNAL_SR),
         A1Probe::Asio(Ok(sr)) if A1_RATES.contains(sr) => (A1Master::Asio, *sr),
@@ -232,8 +231,7 @@ Output A1 supports standard SampleRate only ({sr} Hz).");
             (A1Master::Internal, INTERNAL_SR)
         }
         A1Probe::Asio(Err(e)) => {
-            errors.push(format!("Failed to Open Main Output Device (A1)
-{e}"));
+            errors.push(format!("Failed to Open Main Output Device (A1)\n{e}"));
             (A1Master::Internal, INTERNAL_SR)
         }
         A1Probe::Wdm(None) => {
