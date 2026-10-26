@@ -111,7 +111,8 @@ impl App {
                                 } else {
                                     let types = [PanelType::Color, PanelType::Position3D, PanelType::Modulation];
                                     let cur = types.iter().position(|t| *t == sp.panel_type).unwrap_or(1);
-                                    if let Some(i) = segmented(ui, &["Color", "3D", "FX"], cur) {
+                                    // segmented() derives its ids from ui.id(); scope it per strip so the hardware strips don't clash.
+                                    if let Some(i) = ui.push_id(("panel_type", s), |ui| segmented(ui, &["Color", "3D", "FX"], cur)).inner {
                                         sp.panel_type = types[i];
                                     }
                                 }
