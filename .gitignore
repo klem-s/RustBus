@@ -1,3 +1,6 @@
 /target
 /.omc/
 /.claude/
+
+# Reverse-engineering snapshots of the original binary stay local
+*.rea-snapshot
