@@ -433,6 +433,62 @@ impl MixParams {
     }
 }
 
+/// Three-way merge used by the GUI write-back: every leaf field where `edited` differs from
+/// `before` is copied onto `shared`; all other fields keep the shared value, so concurrent
+/// writes from MIDI, the hotkey thread or the tray made during the frame survive.
+pub fn merge(before: &MixParams, edited: &MixParams, shared: &mut MixParams) {
+    before.merge_into(edited, shared);
+}
+
+trait Merge {
+    fn merge_into(&self, edited: &Self, shared: &mut Self);
+}
+
+macro_rules! merge_leaf {
+    ($($t:ty),*) => {$(
+        impl Merge for $t {
+            fn merge_into(&self, edited: &Self, shared: &mut Self) {
+                if self != edited {
+                    *shared = *edited;
+                }
+            }
+        }
+    )*};
+}
+merge_leaf!(f32, bool, u8, BusMode, PanelType, EqType);
+
+impl<T: Merge, const N: usize> Merge for [T; N] {
+    fn merge_into(&self, edited: &Self, shared: &mut Self) {
+        for ((b, e), s) in self.iter().zip(edited).zip(shared.iter_mut()) {
+            b.merge_into(e, s);
+        }
+    }
+}
+
+/// The destructuring pattern has no `..`, so adding a field without listing it here fails to compile.
+macro_rules! merge_struct {
+    ($t:ident { $($f:ident),* $(,)? }) => {
+        impl Merge for $t {
+            fn merge_into(&self, edited: &Self, shared: &mut Self) {
+                let $t { $($f: _),* } = self;
+                $( self.$f.merge_into(&edited.$f, &mut shared.$f); )*
+            }
+        }
+    };
+}
+merge_struct!(CompParams { gain_in, attack_ms, release_ms, knee, ratio, threshold_db, auto_makeup, gain_out });
+merge_struct!(GateParams { threshold_db, damping_db, bp_sidechain_hz, attack_ms, hold_ms, release_ms });
+merge_struct!(StripParams {
+    gain_db, limit_db, mute, solo, mono, mute_center, route, karaoke, strip_mode, comp_on, gate_on, comp, gate,
+    panel_type, pan_x, pan_y, color_x, color_y, fx_x, fx_y, eq_gain, denoise_on, denoise,
+});
+merge_struct!(EqCell { on, kind, gain_db, freq, q });
+merge_struct!(BusEqChannel { cells, trim_db, delay_ms });
+merge_struct!(BusParams { gain_db, limit_db, mute, mono, mode, eq_on, sel, monitor, eq });
+merge_struct!(TapeParams { route, gain_db });
+merge_struct!(CompositePatch { channels, post_fader });
+merge_struct!(MixParams { strips, buses, tape, composite });
+
 /// Non-realtime configuration: labels and selected devices.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Labels {
@@ -462,4 +518,68 @@ impl Labels {
 
 pub fn clamp_gain(db: f32) -> f32 {
     db.clamp(GAIN_MIN_DB, GAIN_MAX_DB)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn merge_keeps_concurrent_mute_and_local_gain() {
+        let before = MixParams::default();
+        let mut edited = before;
+        edited.strips[0].gain_db = -6.0;
+        let mut shared = before;
+        shared.strips[0].mute = true; // e.g. push-to-talk hotkey during the frame
+        merge(&before, &edited, &mut shared);
+        assert_eq!(shared.strips[0].gain_db, -6.0);
+        assert!(shared.strips[0].mute);
+    }
+
+    #[test]
+    fn merge_keeps_preset_recall_in_same_frame_as_widget_edit() {
+        let before = MixParams::default();
+        let mut edited = before;
+        edited.buses[1].gain_db = -3.0;
+        let mut preset = MixParams::default();
+        preset.strips[2].gain_db = 4.0;
+        preset.strips[2].route = [false, true, false, false, false, true];
+        preset.buses[1].mode = BusMode::TvMix;
+        preset.buses[4].eq[3].cells[2].gain_db = 5.0;
+        let mut shared = preset; // recall wrote the shared params directly
+        merge(&before, &edited, &mut shared);
+        let mut expected = preset;
+        expected.buses[1].gain_db = -3.0;
+        assert_eq!(shared, expected);
+    }
+
+    #[test]
+    fn merge_is_per_array_element_and_nested_field() {
+        let before = MixParams::default();
+        let mut edited = before;
+        edited.strips[1].route[4] = true;
+        edited.buses[0].eq[7].cells[5].freq = 9000.0;
+        edited.strips[3].comp.ratio = 3.0;
+        let mut shared = before;
+        shared.strips[1].route[0] = false;
+        shared.buses[0].eq[7].cells[5].q = 2.0;
+        shared.strips[3].comp.threshold_db = -10.0;
+        merge(&before, &edited, &mut shared);
+        assert!(shared.strips[1].route[4] && !shared.strips[1].route[0]);
+        assert_eq!(shared.buses[0].eq[7].cells[5].freq, 9000.0);
+        assert_eq!(shared.buses[0].eq[7].cells[5].q, 2.0);
+        assert_eq!(shared.strips[3].comp.ratio, 3.0);
+        assert_eq!(shared.strips[3].comp.threshold_db, -10.0);
+    }
+
+    #[test]
+    fn merge_without_edits_leaves_shared_unchanged() {
+        let before = MixParams::default();
+        let mut shared = before;
+        shared.tape.gain_db = -12.0;
+        shared.composite.channels[2] = 7;
+        let expected = shared;
+        merge(&before, &before, &mut shared);
+        assert_eq!(shared, expected);
+    }
 }
