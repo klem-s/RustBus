@@ -252,10 +252,70 @@ fn plan_a1(device: &DeviceConfig, probe: &A1Probe) -> A1Plan {
     A1Plan { master, sr, errors }
 }
 
+/// A master's Core until its device callback takes it on the first call.
+type CoreSlot = Arc<Mutex<Option<Core>>>;
+
+/// The opened A1 device that is to clock the engine (none: the internal clock).
+enum A1 {
+    Asio(asio::AsioOpen),
+    Wasapi(cpal::Device, cpal::SupportedStreamConfig),
+}
+
+/// The running master clock; it owns the Core.
+enum Master {
+    Wasapi(cpal::Stream),
+    Asio(asio::AsioStream),
+    Internal(Arc<AtomicBool>, JoinHandle<()>),
+}
+
+/// Start A1 (or the internal clock when there is none). On failure the Core comes back
+/// with the error to report, so the caller can fall back to the internal clock.
+fn start_master(a1: Option<A1>, core: Core, status: &mut EngineStatus, wake: Arc<dyn Fn() + Send + Sync>) -> Result<Master, (String, Core)> {
+    let Some(a1) = a1 else { return Ok(internal_clock(core)) };
+    let shared = core.shared.clone();
+    let sr = core.sr;
+    // The device callback takes the core on its first call; until then it waits here,
+    // so a failed start can hand it back.
+    let slot = Arc::new(Mutex::new(Some(core)));
+    let started = match a1 {
+        A1::Asio(a) => {
+            let info = a.info.clone();
+            let n_out = info.outputs.len().min(MAX_CH);
+            let sh = shared.clone();
+            let on_reset: asio::OnReset = Box::new(move |why: &str| {
+                sh.status.lock().errors.push(why.to_string());
+                sh.restart_request.store(true, Ordering::Relaxed);
+                wake();
+            });
+            match a.start(asio_process(slot.clone()), n_out, on_reset) {
+                Ok(s) => {
+                    status.master = format!("A1: {}", info.driver);
+                    status.points[NUM_STRIPS] = Some(format!("ASIO: {} ({} Hz, {n_out} ch, {} samples)", info.driver, info.sample_rate, info.buffer));
+                    status.asio = Some(info);
+                    Ok(Master::Asio(s))
+                }
+                Err(e) => Err(format!("Failed to Open Main Output Device (A1)\n{e}")),
+            }
+        }
+        A1::Wasapi(dev, cfg) => {
+            let name = dev.name().unwrap_or_default();
+            let dev_ch = cfg.channels() as usize;
+            match open_master(&dev, cfg, slot.clone(), shared) {
+                Ok(stream) => {
+                    status.master = format!("A1: {name}");
+                    status.points[NUM_STRIPS] = Some(format!("WDM: {name} ({sr} Hz, {dev_ch} ch)"));
+                    Ok(Master::Wasapi(stream))
+                }
+                Err(e) => Err(format!("Failed to Open Main Output Device (A1)\nDevice not ready or used by another process.\n{e}")),
+            }
+        }
+    };
+    started.map_err(|e| (e, slot.lock().take().expect("core still present")))
+}
+
 pub struct Engine {
     streams: Vec<cpal::Stream>,
-    asio: Option<asio::AsioStream>,
-    clock: Option<(Arc<AtomicBool>, JoinHandle<()>)>,
+    master: Option<Master>,
     vban: Option<VbanRuntime>,
 }
 
@@ -292,12 +352,11 @@ impl Engine {
         };
         let plan = plan_a1(device, &probe);
         status.errors.extend(plan.errors);
-        if plan.master != A1Master::Asio {
-            a1_asio = None;
-        }
-        if plan.master != A1Master::Wasapi {
-            a1_wdm = None;
-        }
+        let a1 = match (plan.master, a1_asio, a1_wdm) {
+            (A1Master::Asio, Some(a), _) => Some(A1::Asio(a)),
+            (A1Master::Wasapi, _, Some((dev, cfg))) => Some(A1::Wasapi(dev, cfg)),
+            _ => None,
+        };
         let sr = plan.sr;
         shared.tape.engine_sr.store(sr, Ordering::Relaxed);
         let latency = (device.buffer_wdm.clamp(128, 2048) as usize) * 3 / 2;
@@ -318,70 +377,37 @@ impl Engine {
             direct_off: 0,
         };
 
-        wire_inputs(device, a1_asio.as_ref().map(|a| &a.info), latency, &mut core, &mut status, &mut streams);
+        let asio_info = match &a1 {
+            Some(A1::Asio(a)) => Some(&a.info),
+            _ => None,
+        };
+        wire_inputs(device, asio_info, latency, &mut core, &mut status, &mut streams);
         wire_outputs(device, latency, &mut core, &mut status, &mut streams);
         let vban = wire_vban(vban, &mut core, &mut status, text_tx, wake.clone());
 
-        // ---- start the clock
-        let mut clock = None;
-        let mut asio_stream = None;
-        if let Some(a) = a1_asio {
-            let info = a.info.clone();
-            let n_out = info.outputs.len().min(MAX_CH);
-            core.direct_buf = vec![vec![0.0; info.buffer]; info.inputs.len()];
-            let slot = Arc::new(Mutex::new(Some(core)));
-            let sh = shared.clone();
-            let wake2 = wake.clone();
-            let on_reset: asio::OnReset = Box::new(move |why: &str| {
-                sh.status.lock().errors.push(why.to_string());
-                sh.restart_request.store(true, Ordering::Relaxed);
-                wake2();
-            });
-            match a.start(asio_process(slot.clone()), n_out, on_reset) {
-                Ok(s) => {
-                    status.master = format!("A1: {}", info.driver);
-                    status.points[NUM_STRIPS] = Some(format!("ASIO: {} ({} Hz, {n_out} ch, {} samples)", info.driver, info.sample_rate, info.buffer));
-                    status.asio = Some(info);
-                    asio_stream = Some(s);
-                }
-                Err(e) => {
-                    status.errors.push(format!("Failed to Open Main Output Device (A1)\n{e}"));
-                    let mut core = slot.lock().take().expect("core still present");
-                    core.direct.clear();
-                    for s in 0..NUM_HW_STRIPS {
-                        if device.inputs[s].as_ref().is_some_and(|d| d.kind == DEV_ASIO) {
-                            status.points[s] = None;
-                        }
-                    }
-                    clock = Some(internal_clock(core));
-                    status.master = "Internal Master CLOCK".into();
-                }
-            }
-        } else {
-            match a1_wdm {
-            Some((dev, cfg)) => {
-                let name = dev.name().unwrap_or_default();
-                let dev_ch = cfg.channels() as usize;
-                match open_master(&dev, cfg, core, shared.clone()) {
-                    Ok(stream) => {
-                        status.master = format!("A1: {name}");
-                        status.points[NUM_STRIPS] = Some(format!("WDM: {name} ({sr} Hz, {dev_ch} ch)"));
-                        streams.push(stream);
-                    }
-                    Err((e, core)) => {
-                        status.errors.push(format!("Failed to Open Main Output Device (A1)\nDevice not ready or used by another process.\n{e}"));
-                        clock = Some(internal_clock(core));
-                        status.master = "Internal Master CLOCK".into();
+        // ---- start the clock, falling back to the internal one
+        let master = match start_master(a1, core, &mut status, wake) {
+            Ok(m) => m,
+            Err((e, mut core)) => {
+                status.errors.push(e);
+                core.direct.clear();
+                for s in 0..NUM_HW_STRIPS {
+                    if device.inputs[s].as_ref().is_some_and(|d| d.kind == DEV_ASIO) {
+                        status.points[s] = None;
                     }
                 }
+                internal_clock(core)
             }
-            _ => {
-                clock = Some(internal_clock(core));
-                status.master = "Internal Master CLOCK".into();
-            }
-        }
+        };
+        if let Master::Internal(..) = master {
+            status.master = "Internal Master CLOCK".into();
         }
         for s in &streams {
+            if let Err(e) = s.play() {
+                status.errors.push(format!("Device Not Started: {e}"));
+            }
+        }
+        if let Master::Wasapi(s) = &master {
             if let Err(e) = s.play() {
                 status.errors.push(format!("Device Not Started: {e}"));
             }
@@ -389,20 +415,23 @@ impl Engine {
         status.running = true;
         status.sample_rate = sr;
         *shared.status.lock() = status;
-        Engine { streams, asio: asio_stream, clock, vban: Some(vban) }
+        Engine { streams, master: Some(master), vban: Some(vban) }
     }
 
     /// Open the ASIO driver's own settings panel (A1 on ASIO only).
     pub fn asio_control_panel(&self) {
-        if let Some(a) = &self.asio {
+        if let Some(Master::Asio(a)) = &self.master {
             a.control_panel();
         }
     }
 
     pub fn stop(&mut self) {
-        self.asio = None;
+        // Same order as ever: the ASIO driver first, then the WDM streams (A1 last), then the clock.
+        if let Some(Master::Asio(_)) = self.master {
+            self.master = None;
+        }
         self.streams.clear();
-        if let Some((stop, h)) = self.clock.take() {
+        if let Some(Master::Internal(stop, h)) = self.master.take() {
             stop.store(true, Ordering::Relaxed);
             let _ = h.join();
         }
@@ -420,6 +449,9 @@ impl Drop for Engine {
 
 /// Open the strip inputs: WDM devices through rings, ASIO channels straight from A1's driver.
 fn wire_inputs(device: &DeviceConfig, a1_asio: Option<&asio::AsioInfo>, latency: usize, core: &mut Core, status: &mut EngineStatus, streams: &mut Vec<cpal::Stream>) {
+    if let Some(a) = a1_asio {
+        core.direct_buf = vec![vec![0.0; a.buffer]; a.inputs.len()];
+    }
     for s in 0..NUM_STRIPS {
         let Some(d) = &device.inputs[s] else { continue };
         if d.kind == DEV_ASIO {
@@ -504,7 +536,7 @@ fn wire_vban(vcfg: &VbanConfig, core: &mut Core, status: &mut EngineStatus, text
 }
 
 /// ASIO callback: render A1 in MAX_BLOCK chunks, feeding ASIO inputs straight to their strips.
-fn asio_process(slot: Arc<Mutex<Option<Core>>>) -> asio::Process {
+fn asio_process(slot: CoreSlot) -> asio::Process {
     let mut core: Option<Core> = None;
     Box::new(move |ins: &[Vec<f32>], outs: &mut [Vec<f32>], frames: usize| {
         if core.is_none() {
@@ -536,7 +568,7 @@ fn render_chunked(core: &mut Core, total: usize, mut write: impl FnMut(&[Vec<f32
     }
 }
 
-fn internal_clock(mut core: Core) -> (Arc<AtomicBool>, JoinHandle<()>) {
+fn internal_clock(mut core: Core) -> Master {
     let stop = Arc::new(AtomicBool::new(false));
     let stop2 = stop.clone();
     let h = std::thread::Builder::new()
@@ -557,7 +589,7 @@ fn internal_clock(mut core: Core) -> (Arc<AtomicBool>, JoinHandle<()>) {
             }
         })
         .expect("spawn clock thread");
-    (stop, h)
+    Master::Internal(stop, h)
 }
 
 fn err_fn(shared: Arc<Shared>) -> impl FnMut(cpal::StreamError) + Send + 'static {
@@ -660,22 +692,19 @@ where
     .map_err(|e| e.to_string())
 }
 
-fn open_master(dev: &cpal::Device, cfg: cpal::SupportedStreamConfig, core: Core, shared: Arc<Shared>) -> Result<cpal::Stream, (String, Core)> {
+fn open_master(dev: &cpal::Device, cfg: cpal::SupportedStreamConfig, slot: CoreSlot, shared: Arc<Shared>) -> Result<cpal::Stream, String> {
     let sc = cfg.config();
     let dev_ch = cfg.channels() as usize;
-    // The core is needed back if building fails, so it goes through a shared slot.
-    let slot = Arc::new(Mutex::new(Some(core)));
-    let r = match cfg.sample_format() {
-        cpal::SampleFormat::F32 => build_master::<f32>(dev, &sc, dev_ch, slot.clone(), shared),
-        cpal::SampleFormat::I16 => build_master::<i16>(dev, &sc, dev_ch, slot.clone(), shared),
-        cpal::SampleFormat::I32 => build_master::<i32>(dev, &sc, dev_ch, slot.clone(), shared),
-        cpal::SampleFormat::U16 => build_master::<u16>(dev, &sc, dev_ch, slot.clone(), shared),
+    match cfg.sample_format() {
+        cpal::SampleFormat::F32 => build_master::<f32>(dev, &sc, dev_ch, slot, shared),
+        cpal::SampleFormat::I16 => build_master::<i16>(dev, &sc, dev_ch, slot, shared),
+        cpal::SampleFormat::I32 => build_master::<i32>(dev, &sc, dev_ch, slot, shared),
+        cpal::SampleFormat::U16 => build_master::<u16>(dev, &sc, dev_ch, slot, shared),
         f => Err(format!("unsupported sample format {f:?}")),
-    };
-    r.map_err(|e| (e, slot.lock().take().expect("core still present")))
+    }
 }
 
-fn build_master<T>(dev: &cpal::Device, sc: &cpal::StreamConfig, dev_ch: usize, slot: Arc<Mutex<Option<Core>>>, shared: Arc<Shared>) -> Result<cpal::Stream, String>
+fn build_master<T>(dev: &cpal::Device, sc: &cpal::StreamConfig, dev_ch: usize, slot: CoreSlot, shared: Arc<Shared>) -> Result<cpal::Stream, String>
 where
     T: SizedSample + FromSample<f32> + Send + 'static,
 {
