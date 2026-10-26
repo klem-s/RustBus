@@ -65,7 +65,7 @@ impl App {
 
     /// Status pill: dot, sample rate, clock source. Amber when the engine reports problems.
     fn status_pill(&mut self, ui: &mut Ui) {
-        let st = self.session.shared.status.lock().clone();
+        let st = self.session.status();
         let warn = !st.errors.is_empty() || !st.running;
         let (bg, border, dotc) = if warn { (WARN_BG, WARN_BORDER, AMBER) } else { (STATUS_BG, STATUS_BORDER, ACCENT_A) };
         let source = if st.running { format!("Clock · {}", st.master.replacen(": ", " ", 1)) } else { "Audio engine stopped".into() };

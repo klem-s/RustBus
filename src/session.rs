@@ -14,7 +14,7 @@ use std::time::{Duration, Instant};
 
 use parking_lot::Mutex;
 
-use crate::engine::{list_asio, list_devices, Engine, Shared};
+use crate::engine::{list_asio, list_devices, Engine, EngineStatus, Shared};
 use crate::hotkey::HotkeyRuntime;
 use crate::midi::{self, LearnState, MidiMap, MidiRuntime};
 use crate::options::AppOptions;
@@ -199,6 +199,11 @@ impl Session {
         if let Some(mut e) = self.engine.take() {
             e.stop();
         }
+    }
+
+    /// A copy of the engine status (clock, sample rate, errors, ASIO info).
+    pub fn status(&self) -> EngineStatus {
+        self.shared.status.lock().clone()
     }
 
     /// Open the running ASIO driver's own settings panel.

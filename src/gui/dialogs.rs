@@ -158,7 +158,7 @@ fn device_combo(ui: &mut Ui, id: &str, current: &Option<DeviceRef>, asio: &[Stri
 
 fn system(app: &mut App, ctx: &egui::Context, p: &mut MixParams) {
     window!(app, ctx, system, "System Settings / Options", |ui| {
-        let st = app.session.shared.status.lock().clone();
+        let st = app.session.status();
         ui.heading("Audio Engine");
         ui.label(format!("Sample rate: {} Hz    Master clock: {}", st.sample_rate, st.master));
         ui.horizontal(|ui| {
