@@ -784,3 +784,87 @@ mod golden_tests {
         assert_eq!(h.finish(), GOLDEN_ASIO_PROCESS_HASH, "got {:#018x}", h.finish());
     }
 }
+
+#[cfg(test)]
+mod golden_status_tests {
+    use super::*;
+    use crate::settings::{DeviceRef, DEV_WDM};
+
+    // Device names that cannot exist, so no device or driver is ever opened.
+    const NO_A1: &str = "RustBus Golden Missing A1";
+    const NO_IN: &str = "RustBus Golden Missing In";
+    const NO_OUT: &str = "RustBus Golden Missing Out";
+    const NO_ASIO: &str = "RustBus Golden Missing ASIO";
+
+    fn start(settings: &Settings) -> EngineStatus {
+        let shared = Shared::new(MixParams::default());
+        let (tx, _rx) = std::sync::mpsc::channel();
+        let mut engine = Engine::start(settings, &shared, tx, Arc::new(|| {}));
+        let st = shared.status.lock().clone();
+        engine.stop();
+        st
+    }
+
+    fn dev(kind: i32, name: &str) -> Option<DeviceRef> {
+        Some(DeviceRef { kind, name: name.into() })
+    }
+
+    fn assert_internal(st: &EngineStatus) {
+        assert!(st.running);
+        assert_eq!(st.sample_rate, 48000);
+        assert_eq!(st.master, "Internal Master CLOCK");
+        assert!(st.points.iter().all(Option::is_none), "{:?}", st.points);
+        assert_eq!(st.underruns, 0);
+        assert!(st.asio.is_none());
+    }
+
+    // Characterization golden: must not change during refactor Phases 2-5.
+    #[test]
+    fn golden_status_no_devices() {
+        let st = start(&Settings::default());
+        assert_internal(&st);
+        assert!(st.errors.is_empty(), "{:?}", st.errors);
+    }
+
+    // Characterization golden: must not change during refactor Phases 2-5.
+    #[test]
+    fn golden_status_missing_wdm_devices() {
+        let mut s = Settings::default();
+        s.device.outputs[0] = dev(DEV_WDM, NO_A1);
+        s.device.inputs[0] = dev(DEV_WDM, NO_IN);
+        s.device.inputs[1] = dev(DEV_ASIO, NO_ASIO);
+        s.device.inputs[3] = dev(DEV_WDM, NO_IN);
+        s.device.outputs[1] = dev(DEV_WDM, NO_OUT);
+        s.device.outputs[4] = dev(DEV_WDM, NO_OUT);
+        let st = start(&s);
+        assert_internal(&st);
+        assert_eq!(
+            st.errors,
+            [
+                "A1 device not found: RustBus Golden Missing A1",
+                "Failed to Open Input Device: RustBus Golden Missing In",
+                "Failed to Open Input Device: RustBus Golden Missing ASIO\nASIO inputs need A1 on the same ASIO driver.",
+                "Failed to Open Input Device: RustBus Golden Missing In",
+                "Failed to Open Output Device: RustBus Golden Missing Out",
+                "Failed to Open Output Device: RustBus Golden Missing Out",
+            ]
+        );
+    }
+
+    // Characterization golden: must not change during refactor Phases 2-5.
+    #[test]
+    fn golden_status_missing_asio_driver() {
+        let mut s = Settings::default();
+        s.device.outputs[0] = dev(DEV_ASIO, NO_ASIO);
+        s.device.inputs[2] = dev(DEV_ASIO, NO_ASIO);
+        let st = start(&s);
+        assert_internal(&st);
+        assert_eq!(
+            st.errors,
+            [
+                "Failed to Open Main Output Device (A1)\nASIO driver not installed: RustBus Golden Missing ASIO",
+                "Failed to Open Input Device: RustBus Golden Missing ASIO\nASIO inputs need A1 on the same ASIO driver.",
+            ]
+        );
+    }
+}
