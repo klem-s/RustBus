@@ -193,6 +193,67 @@ impl Core {
     }
 }
 
+/// What probing the configured A1 device found: the I/O half of the A1 decision.
+#[derive(Debug)]
+enum A1Probe {
+    /// No A1 device configured.
+    Unset,
+    /// ASIO driver: its sample rate once opened, or the open error.
+    Asio(Result<u32, String>),
+    /// WDM device: `None` when not found, else its default output config's rate or error.
+    Wdm(Option<Result<u32, String>>),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum A1Master {
+    Asio,
+    Wasapi,
+    Internal,
+}
+
+/// Which clock drives the engine, at what rate, and the errors to report.
+#[derive(Debug)]
+struct A1Plan {
+    master: A1Master,
+    sr: u32,
+    errors: Vec<String>,
+}
+
+/// Decide the master clock from the probe result (no I/O).
+fn plan_a1(device: &DeviceConfig, probe: &A1Probe) -> A1Plan {
+    let mut errors = Vec::new();
+    let bad_rate = |sr: u32| format!("Failed to Open Main Output Device (A1)
+Output A1 supports standard SampleRate only ({sr} Hz).");
+    let (master, sr) = match probe {
+        A1Probe::Unset => (A1Master::Internal, INTERNAL_SR),
+        A1Probe::Asio(Ok(sr)) if A1_RATES.contains(sr) => (A1Master::Asio, *sr),
+        A1Probe::Asio(Ok(sr)) => {
+            errors.push(bad_rate(*sr));
+            (A1Master::Internal, INTERNAL_SR)
+        }
+        A1Probe::Asio(Err(e)) => {
+            errors.push(format!("Failed to Open Main Output Device (A1)
+{e}"));
+            (A1Master::Internal, INTERNAL_SR)
+        }
+        A1Probe::Wdm(None) => {
+            let name = device.outputs[0].as_ref().map(|d| d.name.as_str()).unwrap_or_default();
+            errors.push(format!("A1 device not found: {name}"));
+            (A1Master::Internal, INTERNAL_SR)
+        }
+        A1Probe::Wdm(Some(Err(e))) => {
+            errors.push(format!("A1: {e}"));
+            (A1Master::Internal, INTERNAL_SR)
+        }
+        A1Probe::Wdm(Some(Ok(sr))) if A1_RATES.contains(sr) => (A1Master::Wasapi, *sr),
+        A1Probe::Wdm(Some(Ok(sr))) => {
+            errors.push(bad_rate(*sr));
+            (A1Master::Internal, INTERNAL_SR)
+        }
+    };
+    A1Plan { master, sr, errors }
+}
+
 pub struct Engine {
     streams: Vec<cpal::Stream>,
     asio: Option<asio::AsioStream>,
@@ -207,47 +268,39 @@ impl Engine {
         shared.device_error.store(false, Ordering::Relaxed);
 
         // ---- master clock: A1 (ASIO driver or WASAPI device)
-        let a1_asio = device.outputs[0].as_ref().filter(|d| d.kind == DEV_ASIO).and_then(|d| {
-            let want_buffer = device.buffer_asio.clamp(0, MAX_BLOCK as i32) as usize;
-            match asio::open(&d.name, device.sr_asio.max(0) as u32, want_buffer) {
-                Ok(a) if A1_RATES.contains(&a.info.sample_rate) => Some(a),
-                Ok(a) => {
-                    status.errors.push(format!(
-                        "Failed to Open Main Output Device (A1)\nOutput A1 supports standard SampleRate only ({} Hz).",
-                        a.info.sample_rate
-                    ));
-                    None
+        let mut a1_asio = None;
+        let mut a1_wdm = None;
+        let probe = match device.outputs[0].as_ref() {
+            None => A1Probe::Unset,
+            Some(d) if d.kind == DEV_ASIO => {
+                let want_buffer = device.buffer_asio.clamp(0, MAX_BLOCK as i32) as usize;
+                match asio::open(&d.name, device.sr_asio.max(0) as u32, want_buffer) {
+                    Ok(a) => {
+                        let sr = a.info.sample_rate;
+                        a1_asio = Some(a);
+                        A1Probe::Asio(Ok(sr))
+                    }
+                    Err(e) => A1Probe::Asio(Err(e)),
                 }
-                Err(e) => {
-                    status.errors.push(format!("Failed to Open Main Output Device (A1)\n{e}"));
-                    None
+            }
+            Some(d) => A1Probe::Wdm(find_device(false, &d.name).map(|dev| match dev.default_output_config() {
+                Ok(c) => {
+                    let sr = c.sample_rate().0;
+                    a1_wdm = Some((dev, c));
+                    Ok(sr)
                 }
-            }
-        });
-        let a1 = device.outputs[0].as_ref().filter(|d| d.kind != DEV_ASIO).and_then(|d| {
-            let dev = find_device(false, &d.name);
-            if dev.is_none() {
-                status.errors.push(format!("A1 device not found: {}", d.name));
-            }
-            dev
-        });
-        let a1_cfg = a1.as_ref().and_then(|d| match d.default_output_config() {
-            Ok(c) => Some(c),
-            Err(e) => {
-                status.errors.push(format!("A1: {e}"));
-                None
-            }
-        });
-        let mut sr = match &a1_asio {
-            Some(a) => a.info.sample_rate,
-            None => a1_cfg.as_ref().map(|c| c.sample_rate().0).unwrap_or(INTERNAL_SR),
+                Err(e) => Err(e.to_string()),
+            })),
         };
-        if !A1_RATES.contains(&sr) {
-            status.errors.push(format!(
-                "Failed to Open Main Output Device (A1)\nOutput A1 supports standard SampleRate only ({sr} Hz)."
-            ));
-            sr = INTERNAL_SR;
+        let plan = plan_a1(device, &probe);
+        status.errors.extend(plan.errors);
+        if plan.master != A1Master::Asio {
+            a1_asio = None;
         }
+        if plan.master != A1Master::Wasapi {
+            a1_wdm = None;
+        }
+        let sr = plan.sr;
         shared.tape.engine_sr.store(sr, Ordering::Relaxed);
         let latency = (device.buffer_wdm.clamp(128, 2048) as usize) * 3 / 2;
 
@@ -380,8 +433,8 @@ impl Engine {
                 }
             }
         } else {
-            match (a1, a1_cfg) {
-            (Some(dev), Some(cfg)) if A1_RATES.contains(&cfg.sample_rate().0) => {
+            match a1_wdm {
+            Some((dev, cfg)) => {
                 let name = dev.name().unwrap_or_default();
                 let dev_ch = cfg.channels() as usize;
                 match open_master(&dev, cfg, core, shared.clone()) {
@@ -867,5 +920,65 @@ mod golden_status_tests {
                 "Failed to Open Input Device: RustBus Golden Missing ASIO\nASIO inputs need A1 on the same ASIO driver.",
             ]
         );
+    }
+}
+
+#[cfg(test)]
+mod plan_tests {
+    use super::*;
+    use crate::settings::{DeviceRef, DEV_WDM};
+
+    fn device(kind: i32, name: &str) -> DeviceConfig {
+        let mut d = DeviceConfig::default();
+        d.outputs[0] = Some(DeviceRef { kind, name: name.into() });
+        d
+    }
+
+    #[test]
+    fn no_a1_runs_internal_clock() {
+        let p = plan_a1(&DeviceConfig::default(), &A1Probe::Unset);
+        assert_eq!((p.master, p.sr), (A1Master::Internal, INTERNAL_SR));
+        assert!(p.errors.is_empty());
+    }
+
+    #[test]
+    fn missing_device_falls_back() {
+        let p = plan_a1(&device(DEV_WDM, "Speakers"), &A1Probe::Wdm(None));
+        assert_eq!((p.master, p.sr), (A1Master::Internal, INTERNAL_SR));
+        assert_eq!(p.errors, ["A1 device not found: Speakers"]);
+
+        let p = plan_a1(&device(DEV_WDM, "Speakers"), &A1Probe::Wdm(Some(Err("busy".into()))));
+        assert_eq!((p.master, p.sr), (A1Master::Internal, INTERNAL_SR));
+        assert_eq!(p.errors, ["A1: busy"]);
+    }
+
+    #[test]
+    fn nonstandard_rate_falls_back() {
+        let want = ["Failed to Open Main Output Device (A1)\nOutput A1 supports standard SampleRate only (22050 Hz)."];
+        let p = plan_a1(&device(DEV_WDM, "Speakers"), &A1Probe::Wdm(Some(Ok(22050))));
+        assert_eq!((p.master, p.sr), (A1Master::Internal, INTERNAL_SR));
+        assert_eq!(p.errors, want);
+        let p = plan_a1(&device(DEV_ASIO, "Focusrite USB ASIO"), &A1Probe::Asio(Ok(22050)));
+        assert_eq!((p.master, p.sr), (A1Master::Internal, INTERNAL_SR));
+        assert_eq!(p.errors, want);
+    }
+
+    #[test]
+    fn wasapi_device_is_master() {
+        let p = plan_a1(&device(DEV_WDM, "Speakers"), &A1Probe::Wdm(Some(Ok(44100))));
+        assert_eq!((p.master, p.sr), (A1Master::Wasapi, 44100));
+        assert!(p.errors.is_empty());
+    }
+
+    #[test]
+    fn asio_selected() {
+        let d = device(DEV_ASIO, "Focusrite USB ASIO");
+        let p = plan_a1(&d, &A1Probe::Asio(Ok(96000)));
+        assert_eq!((p.master, p.sr), (A1Master::Asio, 96000));
+        assert!(p.errors.is_empty());
+
+        let p = plan_a1(&d, &A1Probe::Asio(Err("ASIO driver not installed: Focusrite USB ASIO".into())));
+        assert_eq!((p.master, p.sr), (A1Master::Internal, INTERNAL_SR));
+        assert_eq!(p.errors, ["Failed to Open Main Output Device (A1)\nASIO driver not installed: Focusrite USB ASIO"]);
     }
 }
