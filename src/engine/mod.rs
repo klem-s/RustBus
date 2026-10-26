@@ -7,6 +7,7 @@
 pub mod asio;
 pub mod mixer;
 pub mod ring;
+pub mod tape;
 #[cfg(test)]
 pub(crate) mod golden;
 
@@ -21,11 +22,11 @@ use cpal::{FromSample, SizedSample};
 use parking_lot::Mutex;
 
 use crate::params::*;
-use crate::recorder::{TapeCore, TapeShared};
 use crate::settings::{Settings, DEV_ASIO};
 use crate::vban::{InSink, OutSource, VbanRuntime, VbanStats};
 use mixer::{Meters, Mixer, MAX_BLOCK};
 use ring::{ring, AdaptiveReader, Producer};
+use tape::{TapeCore, TapeShared};
 
 /// Sample rates accepted for A1 (decompiled `FUN_00537d90`).
 pub const A1_RATES: [u32; 7] = [32000, 44100, 48000, 88200, 96000, 176400, 192000];
