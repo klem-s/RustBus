@@ -639,3 +639,148 @@ where
     )
     .map_err(|e| e.to_string())
 }
+
+#[cfg(test)]
+mod golden_tests {
+    use super::*;
+    use golden::{level, params, Fnv, Lcg};
+
+    // Characterization golden: must not change during refactor Phases 2-5.
+    const GOLDEN_CORE_BLOCK_HASH: u64 = 0x0f52_8d6b_4280_6e51;
+    // Characterization golden: must not change during refactor Phases 2-5.
+    const GOLDEN_ASIO_PROCESS_HASH: u64 = 0x0535_f28c_1786_bb6d;
+
+    const SR: u32 = 48000;
+
+    fn core(shared: &Arc<Shared>) -> Core {
+        Core {
+            mixer: Mixer::new(SR as f32),
+            shared: shared.clone(),
+            local: *shared.params.lock(),
+            inputs: Vec::new(),
+            outputs: Vec::new(),
+            vban_in: Vec::new(),
+            vban_out: Vec::new(),
+            tape: TapeCore::new(shared.tape.clone()),
+            tmp: vec![0.0; MAX_BLOCK * MAX_CH],
+            sr: SR,
+            direct: Vec::new(),
+            direct_buf: Vec::new(),
+            direct_off: 0,
+        }
+    }
+
+    fn noise(rng: &mut Lcg, a: f32, n: usize) -> Vec<f32> {
+        (0..n).map(|_| a * rng.next()).collect()
+    }
+
+    /// `Core::block` with hand-built rings: a WDM-style AdaptiveReader on strip 1, an ASIO
+    /// direct buffer on strip 2, a 44.1 kHz VBAN input on virtual strip 1, one device output
+    /// (B1, 2 ch) and one VBAN output (A1, 2 ch).
+    #[test]
+    fn golden_core_block() {
+        const FRAMES: usize = 256;
+        let shared = Shared::new(params());
+        shared.vban_stats.inputs[0].sr.store(44100, Ordering::Relaxed);
+        let mut c = core(&shared);
+        let mut rng = Lcg::new(0x5eed_0002);
+
+        let (mut in_prod, cons) = ring(SR as usize * 2);
+        c.inputs.push((0, AdaptiveReader::new(cons, 2, 1.0, 512)));
+        in_prod.push(&noise(&mut rng, 0.3, 512 * 2));
+
+        c.direct.push((1, [1, 0]));
+        c.direct_buf = vec![vec![0.0; FRAMES]; 2];
+
+        let vch = strip_channels(3);
+        let (mut vban_prod, cons) = ring(SR as usize * vch);
+        c.vban_in.push((0, 3, AdaptiveReader::new(cons, vch, 1.0, 512)));
+        vban_prod.push(&noise(&mut rng, 0.3, 512 * vch));
+
+        let (prod, mut out_cons) = ring(SR as usize * 2);
+        c.outputs.push((3, 2, prod));
+        let (prod, mut vban_out_cons) = ring(SR as usize * 2);
+        c.vban_out.push((0, 2, prod));
+
+        let mut h = Fnv::new();
+        let mut out = vec![0.0; FRAMES * 2];
+        let mut peak = 0.0f32;
+        for b in 0..64 {
+            let a = level(b);
+            in_prod.push(&noise(&mut rng, a, FRAMES * 2));
+            // 44.1 kHz source: 235 or 236 frames per 256-frame engine block.
+            let vf = if b % 2 == 0 { 235 } else { 236 };
+            vban_prod.push(&noise(&mut rng, a, vf * vch));
+            for d in c.direct_buf.iter_mut() {
+                for x in d.iter_mut() {
+                    *x = a * rng.next();
+                }
+            }
+            c.block(FRAMES);
+            for cons in [&mut out_cons, &mut vban_out_cons] {
+                assert_eq!(cons.pop(&mut out), FRAMES * 2);
+                h.samples(&out);
+                peak = out.iter().fold(peak, |m, x| m.max(x.abs()));
+            }
+            for ch in c.mixer.buses.iter().flat_map(|b| b.iter()) {
+                h.samples(&ch[..FRAMES]);
+            }
+        }
+        assert!(peak > 1e-3);
+        assert_eq!(c.inputs[0].1.underruns, 0);
+        assert_eq!(c.vban_in[0].2.underruns, 0);
+        assert_eq!(h.finish(), GOLDEN_CORE_BLOCK_HASH, "got {:#018x}", h.finish());
+    }
+
+    /// `asio_process` with callbacks larger than MAX_BLOCK (and the plan's 700) must equal
+    /// rendering the same input with `Core::block` in MAX_BLOCK chunks.
+    #[test]
+    fn golden_asio_process_chunking() {
+        const CALLS: [usize; 4] = [700, 2 * MAX_BLOCK + 700, MAX_BLOCK, 700];
+        const N_OUT: usize = MAX_CH;
+        let max = *CALLS.iter().max().unwrap();
+        let shared = Shared::new(params());
+        let make = || {
+            let mut c = core(&shared);
+            c.direct.push((0, [0, 1]));
+            c.direct.push((2, [1, 1]));
+            c.direct_buf = vec![vec![0.0; max]; 2];
+            c
+        };
+        let mut process = asio_process(Arc::new(Mutex::new(Some(make()))));
+        let mut reference = make();
+
+        let mut rng = Lcg::new(0x5eed_0003);
+        let mut h = Fnv::new();
+        let mut peak = 0.0f32;
+        for (k, &frames) in CALLS.iter().enumerate() {
+            let a = level(k * 3 + 1);
+            let ins: Vec<Vec<f32>> = (0..2).map(|_| noise(&mut rng, a, frames)).collect();
+            let mut outs = vec![vec![0.0; frames]; N_OUT];
+            process(&ins, &mut outs, frames);
+
+            // Reference: the same chunking done by hand.
+            let mut want = vec![vec![0.0; frames]; N_OUT];
+            for (d, s) in reference.direct_buf.iter_mut().zip(&ins) {
+                d[..frames].copy_from_slice(s);
+            }
+            let mut done = 0;
+            while done < frames {
+                let n = (frames - done).min(MAX_BLOCK);
+                reference.direct_off = done;
+                reference.block(n);
+                for (c, w) in want.iter_mut().enumerate() {
+                    w[done..done + n].copy_from_slice(&reference.mixer.buses[0][c][..n]);
+                }
+                done += n;
+            }
+            assert_eq!(outs, want, "callback {k} ({frames} frames)");
+            for o in &outs {
+                h.samples(o);
+                peak = o.iter().fold(peak, |m, x| m.max(x.abs()));
+            }
+        }
+        assert!(peak > 1e-3);
+        assert_eq!(h.finish(), GOLDEN_ASIO_PROCESS_HASH, "got {:#018x}", h.finish());
+    }
+}
