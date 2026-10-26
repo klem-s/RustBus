@@ -11,7 +11,7 @@ use roxmltree::Node;
 
 use crate::params::*;
 use crate::script::{Effect, TapeCmd};
-use crate::settings::{ab, ai};
+use crate::xml::{ab, ai};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Target {

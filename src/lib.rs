@@ -13,3 +13,4 @@ pub mod recorder;
 pub mod script;
 pub mod settings;
 pub mod vban;
+pub mod xml;

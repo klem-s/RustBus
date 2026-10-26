@@ -8,7 +8,8 @@ use std::path::PathBuf;
 use roxmltree::{Document, Node};
 
 use crate::params::{Labels, MixParams};
-use crate::settings::{self, ai, DeviceConfig, Settings};
+use crate::settings::{self, DeviceConfig, Settings};
+use crate::xml::ai;
 
 pub const NUM_PRESETS: usize = 16;
 

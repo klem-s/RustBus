@@ -15,6 +15,7 @@ use roxmltree::{Document, Node};
 use crate::midi::MidiMap;
 use crate::params::*;
 use crate::vban::VbanConfig;
+use crate::xml::{ab, af, ai};
 
 /// Device driver type codes (public Remote API numbering).
 pub const DEV_MME: i32 = 1;
@@ -770,19 +771,6 @@ fn read_strip_attrs(n: Node, s: &mut StripParams) {
             }
         }
     }
-}
-
-pub fn ai(n: Node, name: &str) -> Option<i64> {
-    let v = n.attribute(name)?.trim();
-    v.parse::<i64>().ok().or_else(|| v.parse::<f64>().ok().map(|f| f as i64))
-}
-
-pub fn af(n: Node, name: &str) -> Option<f32> {
-    n.attribute(name)?.trim().parse::<f32>().ok()
-}
-
-pub fn ab(n: Node, name: &str) -> Option<bool> {
-    ai(n, name).map(|v| v != 0)
 }
 
 #[cfg(test)]

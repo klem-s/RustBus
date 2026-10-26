@@ -13,7 +13,7 @@ use std::time::Duration;
 use roxmltree::Node;
 
 use crate::engine::ring::{Consumer, Producer, StreamResampler};
-use crate::settings::{ab, ai};
+use crate::xml::{ab, ai};
 
 pub const DEFAULT_PORT: u16 = 6980;
 pub const NUM_STREAMS: usize = 8;
