@@ -107,7 +107,7 @@ fn hotkey_dlg(app: &mut App, ctx: &egui::Context) {
         if cfg != app.session.options.hotkey {
             app.session.options.hotkey = cfg;
             app.session.options.save();
-            app.restart_hotkey();
+            app.session.restart_hotkey();
         }
     });
     if !open {
@@ -335,7 +335,7 @@ fn recorder(app: &mut App, ctx: &egui::Context) {
 
 fn midi_dlg(app: &mut App, ctx: &egui::Context) {
     window!(app, ctx, midi, "M.I.D.I. Mapping", |ui| {
-        let (ins, outs) = app.midi_ports.clone();
+        let (ins, outs) = app.session.midi_ports.clone();
         let mut restart = false;
         let mut pick = |ui: &mut Ui, id: &str, label: &str, cur: &mut String, list: &[String]| {
             ui.label(label);
@@ -360,37 +360,37 @@ fn midi_dlg(app: &mut App, ctx: &egui::Context) {
             pick(ui, "mo1", "M.I.D.I. Output Device (feedback):", &mut d.midi_out, &outs);
         });
         if restart {
-            app.restart_midi();
+            app.session.restart_midi();
         }
-        let last = app.midi_learn.lock().last_message.clone();
-        let learning = app.midi_learn.lock().target;
+        let last = app.session.midi_learn.lock().last_message.clone();
+        let learning = app.session.midi_learn.lock().target;
         ui.horizontal(|ui| {
             ui.label("M.I.D.I. Map Name:");
-            ui.text_edit_singleline(&mut app.midi_map.lock().name);
+            ui.text_edit_singleline(&mut app.session.midi_map.lock().name);
             ui.label(RichText::new(format!("Last message: {last}")).monospace().color(TEXT_DIM));
         });
         ui.horizontal(|ui| {
             if ui.button("Reset Map").clicked() {
-                *app.midi_map.lock() = MidiMap::default();
+                *app.session.midi_map.lock() = MidiMap::default();
             }
             if ui.button("Load M.I.D.I. Map...").clicked() {
                 if let Some(f) = rfd::FileDialog::new().add_filter("XML", &["xml"]).pick_file() {
                     match std::fs::read_to_string(&f).map_err(|e| e.to_string()).and_then(|t| MidiMap::from_file_xml(&t)) {
-                        Ok(m) => *app.midi_map.lock() = m,
+                        Ok(m) => *app.session.midi_map.lock() = m,
                         Err(e) => app.dlg.message = Some(("M.I.D.I.".into(), e)),
                     }
                 }
             }
             if ui.button("Save Current M.I.D.I. Map...").clicked() {
                 if let Some(f) = rfd::FileDialog::new().add_filter("XML", &["xml"]).set_file_name("MidiMap.xml").save_file() {
-                    let _ = std::fs::write(f, app.midi_map.lock().to_file_xml());
+                    let _ = std::fs::write(f, app.session.midi_map.lock().to_file_xml());
                 }
             }
             if ui.button("Refresh (send feedback)").clicked() {
-                app.send_midi_feedback();
+                app.session.send_midi_feedback();
             }
             if ui.button("Refresh device list").clicked() {
-                app.midi_ports = (midi::list_inputs(), midi::list_outputs());
+                app.session.refresh_midi_ports();
             }
         });
         ui.separator();
@@ -401,7 +401,7 @@ fn midi_dlg(app: &mut App, ctx: &egui::Context) {
                     ui.label(RichText::new(h).strong());
                 }
                 ui.end_row();
-                let mut map = app.midi_map.lock();
+                let mut map = app.session.midi_map.lock();
                 for (i, (_, desc, t)) in controls.iter().enumerate() {
                     let Some(it) = map.items.get_mut(i) else { continue };
                     ui.label(desc);
@@ -409,7 +409,7 @@ fn midi_dlg(app: &mut App, ctx: &egui::Context) {
                     ui.horizontal(|ui| {
                         let is_learning = learning == Some(i);
                         if lit_button(ui, is_learning, if is_learning { "Waiting" } else { "Learn" }, ON_YELLOW, 56.0).clicked() {
-                            app.midi_learn.lock().target = if is_learning { None } else { Some(i) };
+                            app.session.midi_learn.lock().target = if is_learning { None } else { Some(i) };
                         }
                         if ui.small_button("x").on_hover_text("Clear").clicked() {
                             it.bytes = [0; 6];
@@ -590,7 +590,7 @@ fn presets(app: &mut App, ctx: &egui::Context) {
                 ui.label(RichText::new(entry.as_ref().map(|e| e.1.clone()).unwrap_or_default()).size(10.5).color(TEXT_DIM));
                 if ui.add_enabled(entry.is_some(), egui::Button::new("Recall")).clicked() {
                     if let Some(pr) = Preset::load(i) {
-                        let mut s = app.snapshot_settings();
+                        let mut s = app.session.snapshot_settings();
                         let dev_changed = pr.apply_to(&mut s);
                         *app.session.shared.params.lock() = s.params;
                         app.session.settings = s;
@@ -598,11 +598,11 @@ fn presets(app: &mut App, ctx: &egui::Context) {
                         if dev_changed {
                             app.session.restart_engine();
                         }
-                        app.send_midi_feedback();
+                        app.session.send_midi_feedback();
                     }
                 }
                 if ui.button(if entry.is_some() { "Overwrite" } else { "Store" }).clicked() {
-                    let s = app.snapshot_settings();
+                    let s = app.session.snapshot_settings();
                     let pr = Preset::capture(&app.preset_name, &s, app.preset_with_devices);
                     if let Err(e) = pr.store(i) {
                         app.dlg.message = Some(("Preset".into(), e.to_string()));
@@ -861,7 +861,7 @@ fn confirm_reset(app: &mut App, ctx: &egui::Context) {
         ui.horizontal(|ui| {
             if ui.button("Yes").clicked() {
                 app.dlg.confirm_reset = false;
-                app.apply_settings(Settings::default());
+                app.session.apply_settings(Settings::default());
             }
             if ui.button("No").clicked() {
                 app.dlg.confirm_reset = false;

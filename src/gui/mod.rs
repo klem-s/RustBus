@@ -6,23 +6,20 @@ mod theme;
 mod widgets;
 
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicIsize, Ordering};
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread::JoinHandle;
 use std::time::{Duration, Instant};
 
 use eframe::egui::{self, Color32, RichText, Rounding, Sense, Stroke, Ui, Vec2};
-use parking_lot::Mutex;
 
 use rustbus::engine::mixer::Meters;
-use rustbus::session::Session;
-use rustbus::hotkey::{self, HotkeyRuntime};
-use rustbus::midi::{self, LearnState, MidiMap, MidiRuntime};
+use rustbus::hotkey;
 use rustbus::options::AppOptions;
 use rustbus::params::*;
 use rustbus::recorder::{self, RecorderJob, SEEK_SECONDS};
 use rustbus::script::{self, Effect, TapeCmd};
+use rustbus::session::Session;
 use rustbus::settings::{self, DeviceRef, Settings, DEV_ASIO};
 
 use theme::*;
@@ -67,14 +64,8 @@ pub(crate) struct Dialogs {
 
 pub(crate) struct App {
     pub session: Session,
-    pub midi_map: Arc<Mutex<MidiMap>>,
-    pub midi_learn: Arc<Mutex<LearnState>>,
-    midi: Option<MidiRuntime>,
-    fx_tx: Sender<Effect>,
-    fx_rx: Receiver<Effect>,
     recorder_job: Option<RecorderJob>,
     loader: Option<JoinHandle<Result<(String, Vec<f32>, bool), String>>>,
-    pub midi_ports: (Vec<String>, Vec<String>),
     pub dlg: Dialogs,
     disp_strips: [[f32; MAX_CH]; NUM_STRIPS],
     disp_buses: [[f32; MAX_CH]; NUM_BUSES],
@@ -90,9 +81,6 @@ pub(crate) struct App {
     /// Bus EQ dialog channel selection (MAX_CH = all channels).
     pub eq_channel: usize,
     tray: Option<desktop::Tray>,
-    /// Strip the tray "Mute mic" item toggles (follows the hotkey strip).
-    mic_strip: Arc<AtomicIsize>,
-    hotkey: Option<HotkeyRuntime>,
     /// "Press a key" capture in the hotkey dialog: keys already down when it started.
     pub hotkey_capture: Option<Vec<u16>>,
     /// Started by the Windows startup entry: hide to the tray on the first frame.
@@ -125,20 +113,13 @@ impl App {
         } else {
             Settings::default()
         };
-        let midi_map = Arc::new(Mutex::new(settings.midi.clone()));
         let mut session = Session::new(settings, options, wake);
         session.refresh_devices();
-        let (fx_tx, fx_rx) = channel();
+        session.refresh_midi_ports();
         let mut app = App {
             session,
-            midi_map,
-            midi_learn: Arc::new(Mutex::new(LearnState::default())),
-            midi: None,
-            fx_tx,
-            fx_rx,
             recorder_job: None,
             loader: None,
-            midi_ports: (midi::list_inputs(), midi::list_outputs()),
             dlg: Dialogs::default(),
             disp_strips: [[0.0; MAX_CH]; NUM_STRIPS],
             disp_buses: [[0.0; MAX_CH]; NUM_BUSES],
@@ -153,8 +134,6 @@ impl App {
             preset_name: "Scene".into(),
             eq_channel: MAX_CH,
             tray: None,
-            mic_strip: Arc::new(AtomicIsize::new(0)),
-            hotkey: None,
             hotkey_capture: None,
             start_hidden: std::env::args().any(|a| a == desktop::TRAY_ARG),
             cards_bottom: 0.0,
@@ -164,12 +143,12 @@ impl App {
         if let Some(h) = desktop::hwnd_of(cc) {
             desktop::set_window(h);
         }
-        app.tray = desktop::Tray::new(cc.egui_ctx.clone(), app.session.shared.params.clone(), app.mic_strip.clone());
+        app.tray = desktop::Tray::new(cc.egui_ctx.clone(), app.session.shared.params.clone(), app.session.mic_strip.clone());
         desktop::refresh_autostart();
         app.refresh_presets();
         app.session.restart_engine();
-        app.restart_midi();
-        app.restart_hotkey();
+        app.session.restart_midi();
+        app.session.restart_hotkey();
         if let Some(e) = startup_error {
             app.dlg.message = Some(("Load Error".into(), format!("Cannot Load settings from this file\n{e}")));
         }
@@ -224,68 +203,17 @@ impl App {
         } else if close && self.session.options.sys_tray && self.tray.is_some() {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             // Frames stop while hidden, so save now rather than relying on the autosave.
-            let _ = self.save_settings_to(&settings::last_settings_path());
+            let _ = self.session.save_settings_to(&settings::last_settings_path());
             self.session.options.save();
             desktop::hide_window();
         }
-    }
-
-    pub fn restart_hotkey(&mut self) {
-        self.hotkey = None;
-        let cfg = self.session.options.hotkey;
-        self.mic_strip.store(cfg.strip as isize, Ordering::Relaxed);
-        self.hotkey = HotkeyRuntime::start(cfg, self.session.shared.params.clone(), self.session.wake.clone());
-    }
-
-    pub fn restart_midi(&mut self) {
-        let d = &self.session.settings.device;
-        let rt = MidiRuntime::start(
-            &d.midi_in,
-            &d.midi_out,
-            self.midi_map.clone(),
-            self.session.shared.params.clone(),
-            self.midi_learn.clone(),
-            self.fx_tx.clone(),
-            self.session.wake.clone(),
-        );
-        for e in &rt.errors {
-            self.session.console_log.push(format!("[midi] {e}"));
-        }
-        self.midi = Some(rt);
-    }
-
-    pub fn send_midi_feedback(&self) {
-        if let Some(m) = &self.midi {
-            let p = *self.session.shared.params.lock();
-            m.send(&midi::feedback_all(&self.midi_map.lock(), &p));
-        }
-    }
-
-    pub fn snapshot_settings(&mut self) -> Settings {
-        self.session.settings.params = *self.session.shared.params.lock();
-        self.session.settings.midi = self.midi_map.lock().clone();
-        self.session.settings.clone()
-    }
-
-    pub fn save_settings_to(&mut self, path: &std::path::Path) -> Result<(), String> {
-        self.snapshot_settings().save(path).map_err(|e| e.to_string())
-    }
-
-    pub fn apply_settings(&mut self, s: Settings) {
-        *self.session.shared.params.lock() = s.params;
-        *self.midi_map.lock() = s.midi.clone();
-        self.session.shared.tape.set_arm(&s.recorder);
-        self.session.shared.tape.loop_play.store(s.recorder.loop_play, Ordering::Relaxed);
-        self.session.settings = s;
-        self.session.restart_engine();
-        self.restart_midi();
     }
 
     pub fn load_settings_dialog(&mut self, as_startup: bool) {
         if let Some(p) = rfd::FileDialog::new().add_filter("XML", &["xml"]).set_title("Load Settings...").pick_file() {
             match Settings::load(&p) {
                 Ok(s) => {
-                    self.apply_settings(s);
+                    self.session.apply_settings(s);
                     if as_startup {
                         self.session.options.use_startup_file = true;
                         self.session.options.startup_file = p.to_string_lossy().into();
@@ -299,7 +227,7 @@ impl App {
 
     pub fn save_settings_dialog(&mut self) {
         if let Some(p) = rfd::FileDialog::new().add_filter("XML", &["xml"]).set_file_name("RustBus_Settings.xml").set_title("Save Current Settings...").save_file() {
-            if let Err(e) = self.save_settings_to(&p) {
+            if let Err(e) = self.session.save_settings_to(&p) {
                 self.dlg.message = Some(("Save Error".into(), e));
             }
         }
@@ -431,12 +359,12 @@ impl App {
             Effect::Show => {}
             Effect::Lock(b) => self.session.options.lock_gui = b,
             Effect::SaveSettings(p) => {
-                if let Err(e) = self.save_settings_to(std::path::Path::new(&p)) {
+                if let Err(e) = self.session.save_settings_to(std::path::Path::new(&p)) {
                     self.session.console_log.push(format!("save failed: {e}"));
                 }
             }
             Effect::LoadSettings(p) => match Settings::load(std::path::Path::new(&p)) {
-                Ok(s) => self.apply_settings(s),
+                Ok(s) => self.session.apply_settings(s),
                 Err(e) => self.session.console_log.push(format!("load failed: {e}")),
             },
             Effect::Reset => self.dlg.confirm_reset = true,
@@ -447,7 +375,7 @@ impl App {
         while let Ok(t) = self.session.text_rx.try_recv() {
             self.run_script(&t, "vban");
         }
-        while let Ok(e) = self.fx_rx.try_recv() {
+        while let Ok(e) = self.session.fx_rx.try_recv() {
             self.handle_effect(e);
         }
         if self.loader.as_ref().map(|h| h.is_finished()).unwrap_or(false) {
@@ -470,7 +398,7 @@ impl App {
         // Periodic autosave of the last settings (crash safety).
         if self.last_autosave.elapsed() > Duration::from_secs(30) {
             self.last_autosave = Instant::now();
-            let _ = self.save_settings_to(&settings::last_settings_path());
+            let _ = self.session.save_settings_to(&settings::last_settings_path());
         }
         // Meters.
         let m = &self.session.shared.meters;
@@ -514,7 +442,7 @@ impl App {
         }
         if pressed(Key::F5) {
             self.session.refresh_devices();
-            self.midi_ports = (midi::list_inputs(), midi::list_outputs());
+            self.session.refresh_midi_ports();
         }
     }
 
@@ -723,7 +651,7 @@ impl App {
         });
         if ui.button("Refresh Device Lists\t[F5]").clicked() {
             self.session.refresh_devices();
-            self.midi_ports = (midi::list_inputs(), midi::list_outputs());
+            self.session.refresh_midi_ports();
             ui.close_menu();
         }
         ui.separator();
@@ -1389,7 +1317,7 @@ impl eframe::App for App {
 
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
         self.finish_recording();
-        let s = self.snapshot_settings();
+        let s = self.session.snapshot_settings();
         let _ = s.save(&settings::last_settings_path());
         let _ = settings::rotate_daily_backup(&s.to_xml());
         self.session.options.save();
