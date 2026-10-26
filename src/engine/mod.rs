@@ -516,17 +516,26 @@ fn asio_process(slot: Arc<Mutex<Option<Core>>>) -> asio::Process {
         for (dst, src) in core.direct_buf.iter_mut().zip(ins) {
             dst[..frames].copy_from_slice(&src[..frames]);
         }
-        let mut done = 0;
-        while done < frames {
-            let n = (frames - done).min(MAX_BLOCK);
-            core.direct_off = done;
-            core.block(n);
+        render_chunked(core, frames, |a1, done, n| {
             for (c, out) in outs.iter_mut().enumerate().take(MAX_CH) {
-                out[done..done + n].copy_from_slice(&core.mixer.buses[0][c][..n]);
+                out[done..done + n].copy_from_slice(&a1[c][..n]);
             }
-            done += n;
-        }
+        });
     })
+}
+
+/// Render `total` frames in MAX_BLOCK chunks; `write(a1, done, n)` copies bus A1's first
+/// `n` frames to output frames `done..done + n`. Generic so each master inlines its writer.
+#[inline]
+fn render_chunked(core: &mut Core, total: usize, mut write: impl FnMut(&[Vec<f32>], usize, usize)) {
+    let mut done = 0;
+    while done < total {
+        let n = (total - done).min(MAX_BLOCK);
+        core.direct_off = done;
+        core.block(n);
+        write(&core.mixer.buses[0], done, n);
+        done += n;
+    }
 }
 
 fn internal_clock(mut core: Core) -> (Arc<AtomicBool>, JoinHandle<()>) {
@@ -539,7 +548,7 @@ fn internal_clock(mut core: Core) -> (Arc<AtomicBool>, JoinHandle<()>) {
             let period = Duration::from_secs_f64(frames as f64 / core.sr as f64);
             let mut next = Instant::now();
             while !stop2.load(Ordering::Relaxed) {
-                core.block(frames);
+                render_chunked(&mut core, frames, |_, _, _| {});
                 next += period;
                 let now = Instant::now();
                 if next > now {
@@ -685,11 +694,7 @@ where
                 return;
             };
             let total = data.len() / dev_ch;
-            let mut done = 0;
-            while done < total {
-                let n = (total - done).min(MAX_BLOCK);
-                core.block(n);
-                let a1 = &core.mixer.buses[0];
+            render_chunked(core, total, |a1, done, n| {
                 for i in 0..n {
                     let base = (done + i) * dev_ch;
                     for c in 0..dev_ch {
@@ -697,8 +702,7 @@ where
                         data[base + c] = T::from_sample(v);
                     }
                 }
-                done += n;
-            }
+            });
         },
         err_fn(shared),
         None,
