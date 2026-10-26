@@ -11,6 +11,7 @@ pub mod params;
 pub mod presets;
 pub mod recorder;
 pub mod script;
+pub mod session;
 pub mod settings;
 pub mod vban;
 pub mod xml;

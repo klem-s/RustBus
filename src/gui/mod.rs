@@ -16,14 +16,14 @@ use eframe::egui::{self, Color32, RichText, Rounding, Sense, Stroke, Ui, Vec2};
 use parking_lot::Mutex;
 
 use rustbus::engine::mixer::Meters;
-use rustbus::engine::{list_asio, list_devices, Engine, Shared};
+use rustbus::session::Session;
 use rustbus::hotkey::{self, HotkeyRuntime};
 use rustbus::midi::{self, LearnState, MidiMap, MidiRuntime};
 use rustbus::options::AppOptions;
 use rustbus::params::*;
 use rustbus::recorder::{self, RecorderJob, SEEK_SECONDS};
 use rustbus::script::{self, Effect, TapeCmd};
-use rustbus::settings::{self, DeviceRef, Settings, DEV_ASIO, DEV_WDM};
+use rustbus::settings::{self, DeviceRef, Settings, DEV_ASIO};
 
 use theme::*;
 use widgets::*;
@@ -66,31 +66,20 @@ pub(crate) struct Dialogs {
 }
 
 pub(crate) struct App {
-    pub settings: Settings,
-    pub shared: Arc<Shared>,
-    engine: Option<Engine>,
-    pub options: AppOptions,
+    pub session: Session,
     pub midi_map: Arc<Mutex<MidiMap>>,
     pub midi_learn: Arc<Mutex<LearnState>>,
     midi: Option<MidiRuntime>,
-    text_tx: Sender<String>,
-    text_rx: Receiver<String>,
     fx_tx: Sender<Effect>,
     fx_rx: Receiver<Effect>,
-    wake: Arc<dyn Fn() + Send + Sync>,
     recorder_job: Option<RecorderJob>,
     loader: Option<JoinHandle<Result<(String, Vec<f32>, bool), String>>>,
-    pub devices: (Vec<String>, Vec<String>),
-    pub asio_drivers: Vec<String>,
     pub midi_ports: (Vec<String>, Vec<String>),
     pub dlg: Dialogs,
     disp_strips: [[f32; MAX_CH]; NUM_STRIPS],
     disp_buses: [[f32; MAX_CH]; NUM_BUSES],
     help: String,
     pub console_input: String,
-    pub console_log: Vec<String>,
-    restart_pending: bool,
-    restart_at: Option<Instant>,
     last_autosave: Instant,
     pub clipboard_strip: Option<StripParams>,
     pub preset_with_devices: bool,
@@ -136,37 +125,25 @@ impl App {
         } else {
             Settings::default()
         };
-        let shared = Shared::new(settings.params);
-        shared.tape.set_arm(&settings.recorder);
-        shared.tape.loop_play.store(settings.recorder.loop_play, Ordering::Relaxed);
-        let (text_tx, text_rx) = channel();
+        let midi_map = Arc::new(Mutex::new(settings.midi.clone()));
+        let mut session = Session::new(settings, options, wake);
+        session.refresh_devices();
         let (fx_tx, fx_rx) = channel();
         let mut app = App {
-            midi_map: Arc::new(Mutex::new(settings.midi.clone())),
-            settings,
-            shared,
-            engine: None,
-            options,
+            session,
+            midi_map,
             midi_learn: Arc::new(Mutex::new(LearnState::default())),
             midi: None,
-            text_tx,
-            text_rx,
             fx_tx,
             fx_rx,
-            wake,
             recorder_job: None,
             loader: None,
-            devices: list_devices(),
-            asio_drivers: list_asio(),
             midi_ports: (midi::list_inputs(), midi::list_outputs()),
             dlg: Dialogs::default(),
             disp_strips: [[0.0; MAX_CH]; NUM_STRIPS],
             disp_buses: [[0.0; MAX_CH]; NUM_BUSES],
             help: String::new(),
             console_input: String::new(),
-            console_log: Vec::new(),
-            restart_pending: false,
-            restart_at: None,
             last_autosave: Instant::now(),
             clipboard_strip: None,
             preset_with_devices: false,
@@ -187,35 +164,23 @@ impl App {
         if let Some(h) = desktop::hwnd_of(cc) {
             desktop::set_window(h);
         }
-        app.tray = desktop::Tray::new(cc.egui_ctx.clone(), app.shared.params.clone(), app.mic_strip.clone());
+        app.tray = desktop::Tray::new(cc.egui_ctx.clone(), app.session.shared.params.clone(), app.mic_strip.clone());
         desktop::refresh_autostart();
         app.refresh_presets();
-        app.restart_engine();
+        app.session.restart_engine();
         app.restart_midi();
         app.restart_hotkey();
         if let Some(e) = startup_error {
             app.dlg.message = Some(("Load Error".into(), format!("Cannot Load settings from this file\n{e}")));
         }
-        if app.options.show_on_top {
+        if app.session.options.show_on_top {
             cc.egui_ctx.send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
         }
-        app.dlg.presets = app.options.show_preset_scene;
+        app.dlg.presets = app.session.options.show_preset_scene;
         app
     }
 
     // ------------------------------------------------------------ engine / io
-
-    pub fn restart_engine(&mut self) {
-        if let Some(mut e) = self.engine.take() {
-            e.stop();
-        }
-        self.settings.params = *self.shared.params.lock();
-        self.engine = Some(Engine::start(&self.settings.device, &self.settings.vban, &self.shared, self.text_tx.clone(), self.wake.clone()));
-        let st = self.shared.status.lock();
-        for e in &st.errors {
-            self.console_log.push(format!("[engine] {}", e.replace('\n', " ")));
-        }
-    }
 
     /// Size the window to the mixer (top bar + panels + status line), clamped to the monitor.
     fn fit_window(&mut self, ctx: &egui::Context, content: Vec2, status_h: f32) {
@@ -256,50 +221,50 @@ impl App {
             if !close {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             }
-        } else if close && self.options.sys_tray && self.tray.is_some() {
+        } else if close && self.session.options.sys_tray && self.tray.is_some() {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             // Frames stop while hidden, so save now rather than relying on the autosave.
             let _ = self.save_settings_to(&settings::last_settings_path());
-            self.options.save();
+            self.session.options.save();
             desktop::hide_window();
         }
     }
 
     pub fn restart_hotkey(&mut self) {
         self.hotkey = None;
-        let cfg = self.options.hotkey;
+        let cfg = self.session.options.hotkey;
         self.mic_strip.store(cfg.strip as isize, Ordering::Relaxed);
-        self.hotkey = HotkeyRuntime::start(cfg, self.shared.params.clone(), self.wake.clone());
+        self.hotkey = HotkeyRuntime::start(cfg, self.session.shared.params.clone(), self.session.wake.clone());
     }
 
     pub fn restart_midi(&mut self) {
-        let d = &self.settings.device;
+        let d = &self.session.settings.device;
         let rt = MidiRuntime::start(
             &d.midi_in,
             &d.midi_out,
             self.midi_map.clone(),
-            self.shared.params.clone(),
+            self.session.shared.params.clone(),
             self.midi_learn.clone(),
             self.fx_tx.clone(),
-            self.wake.clone(),
+            self.session.wake.clone(),
         );
         for e in &rt.errors {
-            self.console_log.push(format!("[midi] {e}"));
+            self.session.console_log.push(format!("[midi] {e}"));
         }
         self.midi = Some(rt);
     }
 
     pub fn send_midi_feedback(&self) {
         if let Some(m) = &self.midi {
-            let p = *self.shared.params.lock();
+            let p = *self.session.shared.params.lock();
             m.send(&midi::feedback_all(&self.midi_map.lock(), &p));
         }
     }
 
     pub fn snapshot_settings(&mut self) -> Settings {
-        self.settings.params = *self.shared.params.lock();
-        self.settings.midi = self.midi_map.lock().clone();
-        self.settings.clone()
+        self.session.settings.params = *self.session.shared.params.lock();
+        self.session.settings.midi = self.midi_map.lock().clone();
+        self.session.settings.clone()
     }
 
     pub fn save_settings_to(&mut self, path: &std::path::Path) -> Result<(), String> {
@@ -307,12 +272,12 @@ impl App {
     }
 
     pub fn apply_settings(&mut self, s: Settings) {
-        *self.shared.params.lock() = s.params;
+        *self.session.shared.params.lock() = s.params;
         *self.midi_map.lock() = s.midi.clone();
-        self.shared.tape.set_arm(&s.recorder);
-        self.shared.tape.loop_play.store(s.recorder.loop_play, Ordering::Relaxed);
-        self.settings = s;
-        self.restart_engine();
+        self.session.shared.tape.set_arm(&s.recorder);
+        self.session.shared.tape.loop_play.store(s.recorder.loop_play, Ordering::Relaxed);
+        self.session.settings = s;
+        self.session.restart_engine();
         self.restart_midi();
     }
 
@@ -322,9 +287,9 @@ impl App {
                 Ok(s) => {
                     self.apply_settings(s);
                     if as_startup {
-                        self.options.use_startup_file = true;
-                        self.options.startup_file = p.to_string_lossy().into();
-                        self.options.save();
+                        self.session.options.use_startup_file = true;
+                        self.session.options.startup_file = p.to_string_lossy().into();
+                        self.session.options.save();
                     }
                 }
                 Err(e) => self.dlg.message = Some(("Load Error".into(), format!("Cannot Load settings from this file\n{e}"))),
@@ -344,20 +309,10 @@ impl App {
         self.preset_names = rustbus::presets::list().into_iter().map(|p| p.map(|p| (p.name, p.timestamp))).collect();
     }
 
-    pub fn set_strip_device(&mut self, strip: usize, name: Option<String>) {
-        self.settings.device.inputs[strip] = name.map(|n| DeviceRef { kind: DEV_WDM, name: n });
-        self.restart_pending = true;
-    }
-
-    pub fn set_bus_device(&mut self, bus: usize, name: Option<String>) {
-        self.settings.device.outputs[bus] = name.map(|n| DeviceRef { kind: DEV_WDM, name: n });
-        self.restart_pending = true;
-    }
-
     // ------------------------------------------------------------ tape
 
     pub fn tape_cmd(&mut self, c: TapeCmd) {
-        let t = self.shared.tape.clone();
+        let t = self.session.shared.tape.clone();
         match c {
             TapeCmd::Play => {
                 if t.has_file() {
@@ -384,8 +339,8 @@ impl App {
                     let p = t.rec_paused.load(Ordering::Relaxed);
                     t.rec_paused.store(!p, Ordering::Relaxed);
                 } else {
-                    let sr = self.shared.status.lock().sample_rate.max(8000);
-                    match RecorderJob::start(&t, &self.settings.recorder, sr) {
+                    let sr = self.session.shared.status.lock().sample_rate.max(8000);
+                    match RecorderJob::start(&t, &self.session.settings.recorder, sr) {
                         Ok(job) => self.recorder_job = Some(job),
                         Err(e) => self.dlg.message = Some(("Recorder".into(), e)),
                     }
@@ -404,14 +359,14 @@ impl App {
 
     fn finish_recording(&mut self) {
         if let Some(job) = self.recorder_job.take() {
-            self.shared.tape.recording.store(false, Ordering::Relaxed);
+            self.session.shared.tape.recording.store(false, Ordering::Relaxed);
             match job.finish() {
                 Ok(files) => {
                     if let Some(f) = files.first() {
-                        self.settings.recorder.last_file = f.to_string_lossy().into();
-                        *self.shared.tape.status.lock() = format!("Saved {}", f.display());
+                        self.session.settings.recorder.last_file = f.to_string_lossy().into();
+                        *self.session.shared.tape.status.lock() = format!("Saved {}", f.display());
                         // Like the original: the new recording becomes the loaded cassette.
-                        if !self.settings.recorder.multitrack {
+                        if !self.session.settings.recorder.multitrack {
                             self.load_tape_file(f.clone(), false);
                         }
                     }
@@ -422,8 +377,8 @@ impl App {
     }
 
     pub fn load_tape_file(&mut self, path: PathBuf, play: bool) {
-        let sr = self.shared.status.lock().sample_rate.max(8000);
-        *self.shared.tape.status.lock() = format!("Loading {}...", path.display());
+        let sr = self.session.shared.status.lock().sample_rate.max(8000);
+        *self.session.shared.tape.status.lock() = format!("Loading {}...", path.display());
         self.loader = Some(std::thread::spawn(move || {
             let data = recorder::load_audio_file(&path, sr)?;
             let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
@@ -435,11 +390,11 @@ impl App {
 
     pub fn run_script(&mut self, text: &str, source: &str) {
         let result = {
-            let mut p = self.shared.params.lock();
+            let mut p = self.session.shared.params.lock();
             let mut copy = *p;
-            let r = script::execute(text, &mut copy, &mut self.settings.labels);
+            let r = script::execute(text, &mut copy, &mut self.session.settings.labels);
             if r.is_ok() {
-                if self.options.limit_remote_gain && source != "console" {
+                if self.session.options.limit_remote_gain && source != "console" {
                     for s in copy.strips.iter_mut() {
                         s.gain_db = s.gain_db.min(0.0);
                     }
@@ -453,15 +408,15 @@ impl App {
         };
         match result {
             Ok(fx) => {
-                self.console_log.push(format!("[{source}] ok: {}", text.trim()));
+                self.session.console_log.push(format!("[{source}] ok: {}", text.trim()));
                 for e in fx {
                     self.handle_effect(e);
                 }
             }
-            Err(e) => self.console_log.push(format!("[{source}] error: {e}")),
+            Err(e) => self.session.console_log.push(format!("[{source}] error: {e}")),
         }
-        if self.console_log.len() > 500 {
-            self.console_log.drain(..100);
+        if self.session.console_log.len() > 500 {
+            self.session.console_log.drain(..100);
         }
     }
 
@@ -469,27 +424,27 @@ impl App {
         match e {
             Effect::Tape(c) => self.tape_cmd(c),
             Effect::TapeLoad(p) => self.load_tape_file(PathBuf::from(p), false),
-            Effect::StripDevice { strip, name, .. } => self.set_strip_device(strip, (!name.is_empty()).then_some(name)),
-            Effect::BusDevice { bus, name, .. } => self.set_bus_device(bus, (!name.is_empty()).then_some(name)),
-            Effect::Restart => self.restart_pending = true,
-            Effect::Shutdown => self.console_log.push("[script] Command.Shutdown requested".into()),
+            Effect::StripDevice { strip, name, .. } => self.session.set_strip_device(strip, (!name.is_empty()).then_some(name)),
+            Effect::BusDevice { bus, name, .. } => self.session.set_bus_device(bus, (!name.is_empty()).then_some(name)),
+            Effect::Restart => self.session.request_restart(),
+            Effect::Shutdown => self.session.console_log.push("[script] Command.Shutdown requested".into()),
             Effect::Show => {}
-            Effect::Lock(b) => self.options.lock_gui = b,
+            Effect::Lock(b) => self.session.options.lock_gui = b,
             Effect::SaveSettings(p) => {
                 if let Err(e) = self.save_settings_to(std::path::Path::new(&p)) {
-                    self.console_log.push(format!("save failed: {e}"));
+                    self.session.console_log.push(format!("save failed: {e}"));
                 }
             }
             Effect::LoadSettings(p) => match Settings::load(std::path::Path::new(&p)) {
                 Ok(s) => self.apply_settings(s),
-                Err(e) => self.console_log.push(format!("load failed: {e}")),
+                Err(e) => self.session.console_log.push(format!("load failed: {e}")),
             },
             Effect::Reset => self.dlg.confirm_reset = true,
         }
     }
 
     fn poll_background(&mut self, ctx: &egui::Context) {
-        while let Ok(t) = self.text_rx.try_recv() {
+        while let Ok(t) = self.session.text_rx.try_recv() {
             self.run_script(&t, "vban");
         }
         while let Ok(e) = self.fx_rx.try_recv() {
@@ -498,11 +453,11 @@ impl App {
         if self.loader.as_ref().map(|h| h.is_finished()).unwrap_or(false) {
             match self.loader.take().unwrap().join() {
                 Ok(Ok((name, data, play))) => {
-                    recorder::set_loaded_file(&self.shared.tape, &name, data, play);
-                    *self.shared.tape.status.lock() = String::new();
+                    recorder::set_loaded_file(&self.session.shared.tape, &name, data, play);
+                    *self.session.shared.tape.status.lock() = String::new();
                 }
                 Ok(Err(e)) => {
-                    *self.shared.tape.status.lock() = e.clone();
+                    *self.session.shared.tape.status.lock() = e.clone();
                     self.dlg.message = Some(("Tape".into(), e));
                 }
                 Err(_) => {}
@@ -511,32 +466,14 @@ impl App {
         if self.recorder_job.as_ref().map(|j| j.is_finished()).unwrap_or(false) {
             self.finish_recording();
         }
-        // Device failure → auto restart (menu "Auto Restart Audio Engine").
-        if self.shared.device_error.load(Ordering::Relaxed) && self.options.auto_restart && self.restart_at.is_none() {
-            self.restart_at = Some(Instant::now() + Duration::from_secs(2));
-        }
-        // A driver asked to be reopened (ASIO reset after a control-panel change).
-        if self.shared.restart_request.swap(false, Ordering::Relaxed) && self.restart_at.is_none() {
-            self.restart_at = Some(Instant::now() + Duration::from_millis(500));
-        }
-        if let Some(t) = self.restart_at {
-            if Instant::now() >= t {
-                self.restart_at = None;
-                self.refresh_devices();
-                self.restart_engine();
-            }
-        }
-        if self.restart_pending {
-            self.restart_pending = false;
-            self.restart_engine();
-        }
+        self.session.poll_restart();
         // Periodic autosave of the last settings (crash safety).
         if self.last_autosave.elapsed() > Duration::from_secs(30) {
             self.last_autosave = Instant::now();
             let _ = self.save_settings_to(&settings::last_settings_path());
         }
         // Meters.
-        let m = &self.shared.meters;
+        let m = &self.session.shared.meters;
         for s in 0..NUM_STRIPS {
             for c in 0..MAX_CH {
                 let v = Meters::take(&m.strips[s][c]);
@@ -558,7 +495,7 @@ impl App {
         let pressed = |k: Key| ctx.input(|i| i.key_pressed(k));
         let _ = keys;
         if ctrl && pressed(Key::R) {
-            self.restart_engine();
+            self.session.restart_engine();
         }
         if ctrl && pressed(Key::Num1) {
             self.dlg.vban = !self.dlg.vban;
@@ -576,7 +513,7 @@ impl App {
             self.dlg.system = !self.dlg.system;
         }
         if pressed(Key::F5) {
-            self.refresh_devices();
+            self.session.refresh_devices();
             self.midi_ports = (midi::list_inputs(), midi::list_outputs());
         }
     }
@@ -620,14 +557,14 @@ impl App {
                     let menu = ui.menu_button(text("☰  Menu", medium(13.0), GHOST_TEXT), |ui| self.main_menu(ui, ctx));
                     self.hover_help(&menu.response, "MENU");
                 });
-                let v = ghost_button(ui, "VBAN", None, self.settings.vban.enabled);
+                let v = ghost_button(ui, "VBAN", None, self.session.settings.vban.enabled);
                 if v.clicked() {
                     self.dlg.vban = !self.dlg.vban;
                 }
                 self.hover_help(&v, "BUTVBAN");
             });
             self.status_pill(ui);
-            if self.options.lock_gui {
+            if self.session.options.lock_gui {
                 let r = ui.label(text("Locked", semi(12.0), RED));
                 self.hover_help(&r, "LOCKICON");
             }
@@ -644,7 +581,7 @@ impl App {
 
     /// Status pill: dot, sample rate, clock source. Amber when the engine reports problems.
     fn status_pill(&mut self, ui: &mut Ui) {
-        let st = self.shared.status.lock().clone();
+        let st = self.session.shared.status.lock().clone();
         let warn = !st.errors.is_empty() || !st.running;
         let (bg, border, dotc) = if warn { (WARN_BG, WARN_BORDER, AMBER) } else { (STATUS_BG, STATUS_BORDER, ACCENT_A) };
         let source = if st.running { format!("Clock · {}", st.master.replacen(": ", " ", 1)) } else { "Audio engine stopped".into() };
@@ -673,7 +610,7 @@ impl App {
 
     /// "A1 · device" pill in the top bar; teal badge when assigned. Click opens the device list.
     fn hw_out_pill(&mut self, ui: &mut Ui, b: usize) {
-        let name = self.settings.device.outputs[b].as_ref().map(|d| pretty_device(&d.name));
+        let name = self.session.settings.device.outputs[b].as_ref().map(|d| pretty_device(&d.name));
         let assigned = name.is_some();
         let label = name.unwrap_or_else(|| "Not assigned".into());
         let font = regular(12.0);
@@ -698,27 +635,27 @@ impl App {
 
     fn main_menu(&mut self, ui: &mut Ui, ctx: &egui::Context) {
         if ui.button("Restart Audio Engine\t[CTRL+R]").clicked() {
-            self.restart_engine();
+            self.session.restart_engine();
             ui.close_menu();
         }
-        ui.checkbox(&mut self.options.auto_restart, "Auto Restart Audio Engine (on device error)");
+        ui.checkbox(&mut self.session.options.auto_restart, "Auto Restart Audio Engine (on device error)");
         ui.separator();
         if ui.button("Mic Hotkey (Push to Talk)...").clicked() {
             self.dlg.hotkey = true;
             ui.close_menu();
         }
-        ui.checkbox(&mut self.options.sys_tray, "Close to System Tray (keep audio running)");
+        ui.checkbox(&mut self.session.options.sys_tray, "Close to System Tray (keep audio running)");
         let mut auto = desktop::autostart_enabled();
         if ui.checkbox(&mut auto, "Start with Windows (in tray)").changed() {
             if let Err(e) = desktop::set_autostart(auto) {
                 self.dlg.message = Some(("Start with Windows".into(), e));
             } else if auto {
                 // Starting hidden only makes sense if closing keeps it in the tray.
-                self.options.sys_tray = true;
+                self.session.options.sys_tray = true;
             }
         }
         if ui.button("Eject Cassette (release audio file)").clicked() {
-            self.shared.tape.eject();
+            self.session.shared.tape.eject();
             ui.close_menu();
         }
         ui.separator();
@@ -730,7 +667,7 @@ impl App {
             ui.close_menu();
             self.load_settings_dialog(true);
         }
-        ui.checkbox(&mut self.options.use_startup_file, format!("Load Settings on Startup: {}", if self.options.startup_file.is_empty() { "-".into() } else { short(&self.options.startup_file) }));
+        ui.checkbox(&mut self.session.options.use_startup_file, format!("Load Settings on Startup: {}", if self.session.options.startup_file.is_empty() { "-".into() } else { short(&self.session.options.startup_file) }));
         if ui.button("Save Settings...").clicked() {
             ui.close_menu();
             self.save_settings_dialog();
@@ -740,18 +677,18 @@ impl App {
             ui.close_menu();
         }
         ui.separator();
-        if ui.checkbox(&mut self.options.show_on_top, "Set as Always Visible").changed() {
-            let lvl = if self.options.show_on_top { egui::WindowLevel::AlwaysOnTop } else { egui::WindowLevel::Normal };
+        if ui.checkbox(&mut self.session.options.show_on_top, "Set as Always Visible").changed() {
+            let lvl = if self.session.options.show_on_top { egui::WindowLevel::AlwaysOnTop } else { egui::WindowLevel::Normal };
             ctx.send_viewport_cmd(egui::ViewportCommand::WindowLevel(lvl));
         }
-        ui.checkbox(&mut self.options.lock_gui, "Lock Graphic User Interface");
-        ui.checkbox(&mut self.options.limit_remote_gain, "Limit Remote Gain to 0 dBfs");
-        ui.checkbox(&mut self.options.show_caption_help, "Show Contextual Help In Caption");
-        ui.checkbox(&mut self.options.show_preset_scene, "Show Preset Scene On Startup");
+        ui.checkbox(&mut self.session.options.lock_gui, "Lock Graphic User Interface");
+        ui.checkbox(&mut self.session.options.limit_remote_gain, "Limit Remote Gain to 0 dBfs");
+        ui.checkbox(&mut self.session.options.show_caption_help, "Show Contextual Help In Caption");
+        ui.checkbox(&mut self.session.options.show_preset_scene, "Show Preset Scene On Startup");
         ui.menu_button("Zoom", |ui| {
             for z in [1.0f32, 0.9, 0.75, 0.6, 0.5] {
-                if ui.radio(self.options.zoom == z, format!("Zoom {}%", (z * 100.0) as i32)).clicked() {
-                    self.options.zoom = z;
+                if ui.radio(self.session.options.zoom == z, format!("Zoom {}%", (z * 100.0) as i32)).clicked() {
+                    self.session.options.zoom = z;
                     ctx.set_zoom_factor(z);
                 }
             }
@@ -785,7 +722,7 @@ impl App {
             }
         });
         if ui.button("Refresh Device Lists\t[F5]").clicked() {
-            self.refresh_devices();
+            self.session.refresh_devices();
             self.midi_ports = (midi::list_inputs(), midi::list_outputs());
             ui.close_menu();
         }
@@ -802,17 +739,17 @@ impl App {
     fn input_device_menu(&mut self, ui: &mut Ui, s: usize) {
         ui.label(RichText::new(format!("Select Input Device #{}", s + 1)).strong());
         if ui.button("- Remove Selection -").clicked() {
-            self.set_strip_device(s, None);
+            self.session.set_strip_device(s, None);
             close_popup(ui);
         }
         ui.separator();
-        let cur = self.settings.device.inputs[s].clone();
+        let cur = self.session.settings.device.inputs[s].clone();
         // ASIO inputs: channels of the driver running A1 (hardware strips only, like the original).
         if !is_virtual_strip(s) {
-            let asio = self.shared.status.lock().asio.clone();
-            let a1_is_asio = self.settings.device.outputs[0].as_ref().is_some_and(|d| d.kind == DEV_ASIO);
+            let asio = self.session.shared.status.lock().asio.clone();
+            let a1_is_asio = self.session.settings.device.outputs[0].as_ref().is_some_and(|d| d.kind == DEV_ASIO);
             if let Some(info) = asio {
-                let patch = self.settings.device.asio_patch[s];
+                let patch = self.session.settings.device.asio_patch[s];
                 let is_cur = |l: usize, r: usize| cur.as_ref().is_some_and(|d| d.kind == DEV_ASIO) && patch == [l as i32, r as i32];
                 Self::menu_header(ui, &format!("ASIO · {}", info.driver));
                 let n = info.inputs.len();
@@ -821,9 +758,9 @@ impl App {
                 for (l, r) in choices {
                     let label = if l == r { format!("ASIO: {} (mono)", info.inputs[l]) } else { format!("ASIO: {} + {}", info.inputs[l], info.inputs[r]) };
                     if ui.radio(is_cur(l, r), label).clicked() {
-                        self.settings.device.asio_patch[s] = [l as i32, r as i32];
-                        self.settings.device.inputs[s] = Some(DeviceRef { kind: DEV_ASIO, name: info.driver.clone() });
-                        self.restart_pending = true;
+                        self.session.settings.device.asio_patch[s] = [l as i32, r as i32];
+                        self.session.settings.device.inputs[s] = Some(DeviceRef { kind: DEV_ASIO, name: info.driver.clone() });
+                        self.session.request_restart();
                         close_popup(ui);
                     }
                 }
@@ -831,16 +768,16 @@ impl App {
             } else if a1_is_asio {
                 ui.label(RichText::new("ASIO inputs appear here once A1's ASIO driver is running.").size(11.0).color(TEXT_3));
                 ui.separator();
-            } else if !self.asio_drivers.is_empty() {
+            } else if !self.session.asio_drivers.is_empty() {
                 ui.label(RichText::new("For ASIO inputs, set A1 to an ASIO driver first.").size(11.0).color(TEXT_3));
                 ui.separator();
             }
         }
         Self::menu_header(ui, "Windows audio (WDM)");
-        for name in self.devices.0.clone() {
+        for name in self.session.devices.0.clone() {
             let on = cur.as_ref().is_some_and(|d| d.kind != DEV_ASIO && d.name == name);
             if ui.radio(on, format!("WDM: {name}")).clicked() {
-                self.set_strip_device(s, Some(name));
+                self.session.set_strip_device(s, Some(name));
                 close_popup(ui);
             }
         }
@@ -849,29 +786,29 @@ impl App {
     fn output_device_menu(&mut self, ui: &mut Ui, b: usize) {
         ui.label(RichText::new(format!("Select {} Output Device", BUS_NAMES[b])).strong());
         if ui.button("- Remove Selection -").clicked() {
-            self.set_bus_device(b, None);
+            self.session.set_bus_device(b, None);
             close_popup(ui);
         }
         ui.separator();
-        let cur = self.settings.device.outputs[b].clone();
+        let cur = self.session.settings.device.outputs[b].clone();
         // ASIO drives the master clock, so (as in the original) only A1 can use it.
-        if b == 0 && !self.asio_drivers.is_empty() {
+        if b == 0 && !self.session.asio_drivers.is_empty() {
             Self::menu_header(ui, "ASIO (lowest latency, A1 only)");
-            for name in self.asio_drivers.clone() {
+            for name in self.session.asio_drivers.clone() {
                 let on = cur.as_ref().is_some_and(|d| d.kind == DEV_ASIO && d.name == name);
                 if ui.radio(on, format!("ASIO: {name}")).clicked() {
-                    self.settings.device.outputs[0] = Some(DeviceRef { kind: DEV_ASIO, name });
-                    self.restart_pending = true;
+                    self.session.settings.device.outputs[0] = Some(DeviceRef { kind: DEV_ASIO, name });
+                    self.session.request_restart();
                     close_popup(ui);
                 }
             }
             ui.separator();
         }
         Self::menu_header(ui, "Windows audio (WDM)");
-        for name in self.devices.1.clone() {
+        for name in self.session.devices.1.clone() {
             let on = cur.as_ref().is_some_and(|d| d.kind != DEV_ASIO && d.name == name);
             if ui.radio(on, format!("WDM: {name}")).clicked() {
-                self.set_bus_device(b, Some(name));
+                self.session.set_bus_device(b, Some(name));
                 close_popup(ui);
             }
         }
@@ -884,11 +821,11 @@ fn menu_header(ui: &mut Ui, title: &str) {
 
 /// Strip device caption: the WDM device name, or the patched ASIO channels.
     fn input_caption(&self, s: usize) -> String {
-        match &self.settings.device.inputs[s] {
+        match &self.session.settings.device.inputs[s] {
             None => "No device".into(),
             Some(d) if d.kind == DEV_ASIO => {
-                let [l, r] = self.settings.device.asio_patch[s].map(|c| c.max(0) as usize);
-                let st = self.shared.status.lock();
+                let [l, r] = self.session.settings.device.asio_patch[s].map(|c| c.max(0) as usize);
+                let st = self.session.shared.status.lock();
                 let name = |c: usize| st.asio.as_ref().and_then(|a| a.inputs.get(c).cloned()).unwrap_or_else(|| format!("In {}", c + 1));
                 if l == r {
                     format!("{} · ASIO", name(l))
@@ -900,16 +837,11 @@ fn menu_header(ui: &mut Ui, title: &str) {
         }
     }
 
-    pub fn refresh_devices(&mut self) {
-        self.devices = list_devices();
-        self.asio_drivers = list_asio();
-    }
-
     fn strip_ui(&mut self, ui: &mut Ui, s: usize, p: &mut MixParams) {
         let virt = is_virtual_strip(s);
-        let locked = self.options.lock_gui;
+        let locked = self.session.options.lock_gui;
         let accent = if virt { ACCENT_B } else { ACCENT_A };
-        let idle = self.settings.device.inputs[s].is_none();
+        let idle = self.session.settings.device.inputs[s].is_none();
         let inner = STRIP_W - 2.0 * STRIP_PAD;
         card().show(ui, |ui| {
             ui.set_width(inner);
@@ -917,7 +849,7 @@ fn menu_header(ui: &mut Ui, title: &str) {
                 ui.spacing_mut().item_spacing = Vec2::new(8.0, 12.0);
 
                 // Head: dot + name. Double-click renames, right-click opens the strip menu.
-                let title = self.settings.labels.strip_display(s);
+                let title = self.session.settings.labels.strip_display(s);
                 let r = ui
                     .horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 8.0;
@@ -1043,7 +975,7 @@ fn menu_header(ui: &mut Ui, title: &str) {
                                 self.help = help_text("STRIP_SOLO").into();
                             }
                             let mut r = flag_button(ui, bs, "Mute", sp.mute.then_some(RED));
-                            let hk = self.options.hotkey;
+                            let hk = self.session.options.hotkey;
                             if hk.active() && hk.strip == s {
                                 r = r.on_hover_text(format!("{} on {}", hk.mode.label(), hotkey::key_name(hk.vk)));
                             }
@@ -1103,7 +1035,7 @@ fn menu_header(ui: &mut Ui, title: &str) {
     fn strip_context_menu(&mut self, ui: &mut Ui, s: usize, p: &mut MixParams) {
         ui.label(RichText::new(format!("Strip #{}", s + 1)).strong());
         if ui.button("Edit Label...").clicked() {
-            self.dlg.rename = Some((true, s, self.settings.labels.strip_display(s)));
+            self.dlg.rename = Some((true, s, self.session.settings.labels.strip_display(s)));
             ui.close_menu();
         }
         ui.separator();
@@ -1152,16 +1084,16 @@ fn menu_header(ui: &mut Ui, title: &str) {
     }
 
     fn bus_ui(&mut self, ui: &mut Ui, b: usize, p: &mut MixParams) {
-        let locked = self.options.lock_gui;
+        let locked = self.session.options.lock_gui;
         let virt = b >= 3;
         let accent = if virt { ACCENT_B } else { ACCENT_A };
-        let idle = self.settings.device.outputs[b].is_none();
+        let idle = self.session.settings.device.outputs[b].is_none();
         let inner = BUS_W - 2.0 * STRIP_PAD;
         card().show(ui, |ui| {
             ui.set_width(inner);
             ui.vertical(|ui| {
                 ui.spacing_mut().item_spacing = Vec2::new(8.0, 12.0);
-                let bus_title = self.settings.labels.bus_display(b);
+                let bus_title = self.session.settings.labels.bus_display(b);
                 let r = ui
                     .horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 8.0;
@@ -1188,7 +1120,7 @@ fn menu_header(ui: &mut Ui, title: &str) {
                 ui.add_space(-6.0);
                 mini(ui, if virt { "Virtual" } else { "Physical" }, TEXT_3);
 
-                let dev = self.settings.device.outputs[b].as_ref().map(|d| pretty_device(&d.name)).unwrap_or_else(|| "Not assigned".into());
+                let dev = self.session.settings.device.outputs[b].as_ref().map(|d| pretty_device(&d.name)).unwrap_or_else(|| "Not assigned".into());
                 let r = select(ui, ("out-dev", b), &dev, inner, |ui| self.output_device_menu(ui, b));
                 self.hover_help(&r, &format!("BUS{}", BUS_NAMES[b]));
 
@@ -1258,7 +1190,7 @@ fn menu_header(ui: &mut Ui, title: &str) {
 
     /// Player / recorder bar at the top of the Master section.
     fn player_ui(&mut self, ui: &mut Ui, p: &mut MixParams, width: f32) {
-        let t = self.shared.tape.clone();
+        let t = self.session.shared.tape.clone();
         card().inner_margin(egui::Margin::symmetric(14.0, 12.0)).show(ui, |ui| {
             ui.set_width(width - 28.0);
             ui.horizontal(|ui| {
@@ -1336,7 +1268,7 @@ fn menu_header(ui: &mut Ui, title: &str) {
                 }
                 if resp.clicked() {
                     if let Some(f) = rfd::FileDialog::new().add_filter("Audio (wav, bwf)", &["wav", "bwf"]).set_title("Select Audio File").pick_file() {
-                        let play = !self.settings.recorder.dont_play;
+                        let play = !self.session.settings.recorder.dont_play;
                         self.load_tape_file(f, play);
                     }
                 }
@@ -1364,7 +1296,7 @@ impl eframe::App for App {
         self.shortcuts(ctx);
         self.help.clear();
 
-        let before = *self.shared.params.lock();
+        let before = *self.session.shared.params.lock();
         let mut p = before;
 
         egui::TopBottomPanel::top("top")
@@ -1374,7 +1306,7 @@ impl eframe::App for App {
         let status_h = egui::TopBottomPanel::bottom("status")
             .frame(egui::Frame::none().fill(TOPBAR).inner_margin(egui::Margin::symmetric(24.0, 6.0)))
             .show(ctx, |ui| {
-                let help = if self.options.show_caption_help && !self.help.is_empty() { self.help.clone() } else { String::from(" ") };
+                let help = if self.session.options.show_caption_help && !self.help.is_empty() { self.help.clone() } else { String::from(" ") };
                 ui.label(text(help, regular(11.0), TEXT_3));
             })
             .response
@@ -1444,14 +1376,14 @@ impl eframe::App for App {
         // Write back only the fields edited this frame, so concurrent writes to the shared params
         // (MIDI, hotkey, tray, and in-frame preset recall / console / reset) are not clobbered.
         let p = {
-            let mut shared = self.shared.params.lock();
+            let mut shared = self.session.shared.params.lock();
             if p != before {
                 rustbus::params::merge(&before, &p, &mut shared);
             }
             *shared
         };
         if let Some(t) = &self.tray {
-            t.set_mic_muted(p.strips[self.options.hotkey.strip.min(NUM_STRIPS - 1)].mute);
+            t.set_mic_muted(p.strips[self.session.options.hotkey.strip.min(NUM_STRIPS - 1)].mute);
         }
     }
 
@@ -1460,10 +1392,8 @@ impl eframe::App for App {
         let s = self.snapshot_settings();
         let _ = s.save(&settings::last_settings_path());
         let _ = settings::rotate_daily_backup(&s.to_xml());
-        self.options.save();
-        if let Some(mut e) = self.engine.take() {
-            e.stop();
-        }
+        self.session.options.save();
+        self.session.stop_engine();
     }
 }
 

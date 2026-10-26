@@ -43,7 +43,7 @@ fn hotkey_dlg(app: &mut App, ctx: &egui::Context) {
     }
     let mut open = true;
     egui::Window::new("Mic Hotkey").open(&mut open).resizable(false).show(ctx, |ui| {
-        let mut cfg = app.options.hotkey;
+        let mut cfg = app.session.options.hotkey;
         egui::Grid::new("hotkey").num_columns(2).spacing([12.0, 8.0]).show(ui, |ui| {
             ui.label("Mode");
             egui::ComboBox::from_id_salt("hk-mode").width(180.0).selected_text(cfg.mode.label()).show_ui(ui, |ui| {
@@ -54,9 +54,9 @@ fn hotkey_dlg(app: &mut App, ctx: &egui::Context) {
             ui.end_row();
 
             ui.label("Strip");
-            egui::ComboBox::from_id_salt("hk-strip").width(180.0).selected_text(app.settings.labels.strip_display(cfg.strip)).show_ui(ui, |ui| {
+            egui::ComboBox::from_id_salt("hk-strip").width(180.0).selected_text(app.session.settings.labels.strip_display(cfg.strip)).show_ui(ui, |ui| {
                 for s in 0..NUM_STRIPS {
-                    ui.selectable_value(&mut cfg.strip, s, app.settings.labels.strip_display(s));
+                    ui.selectable_value(&mut cfg.strip, s, app.session.settings.labels.strip_display(s));
                 }
             });
             ui.end_row();
@@ -90,7 +90,7 @@ fn hotkey_dlg(app: &mut App, ctx: &egui::Context) {
         });
         ui.separator();
         let key = hotkey::key_name(cfg.vk);
-        let strip = app.settings.labels.strip_display(cfg.strip);
+        let strip = app.session.settings.labels.strip_display(cfg.strip);
         let status = match cfg.mode {
             _ if cfg.vk == 0 && cfg.mode != HotkeyMode::Off => "Choose a key to turn it on.".to_string(),
             HotkeyMode::Off => "Hotkey is off.".to_string(),
@@ -104,9 +104,9 @@ fn hotkey_dlg(app: &mut App, ctx: &egui::Context) {
                 .size(11.0)
                 .color(TEXT_DIM),
         );
-        if cfg != app.options.hotkey {
-            app.options.hotkey = cfg;
-            app.options.save();
+        if cfg != app.session.options.hotkey {
+            app.session.options.hotkey = cfg;
+            app.session.options.save();
             app.restart_hotkey();
         }
     });
@@ -156,19 +156,19 @@ fn device_combo(ui: &mut Ui, id: &str, current: &Option<DeviceRef>, asio: &[Stri
 
 fn system(app: &mut App, ctx: &egui::Context, p: &mut MixParams) {
     window!(app, ctx, system, "System Settings / Options", |ui| {
-        let st = app.shared.status.lock().clone();
+        let st = app.session.shared.status.lock().clone();
         ui.heading("Audio Engine");
         ui.label(format!("Sample rate: {} Hz    Master clock: {}", st.sample_rate, st.master));
         ui.horizontal(|ui| {
             ui.label("Buffering (WDM/WASAPI latency target, samples):");
-            ui.add(egui::DragValue::new(&mut app.settings.device.buffer_wdm).range(128..=2048));
+            ui.add(egui::DragValue::new(&mut app.session.settings.device.buffer_wdm).range(128..=2048));
             ui.label(RichText::new("(default: 512)").color(TEXT_DIM));
         });
         ui.horizontal(|ui| {
             ui.label("Buffering ASIO (samples, 0 = driver default):");
-            ui.add(egui::DragValue::new(&mut app.settings.device.buffer_asio).range(0..=2048));
+            ui.add(egui::DragValue::new(&mut app.session.settings.device.buffer_asio).range(0..=2048));
             ui.label("Preferred ASIO sample rate:");
-            let sr = &mut app.settings.device.sr_asio;
+            let sr = &mut app.session.settings.device.sr_asio;
             egui::ComboBox::from_id_salt("sr-asio").selected_text(if *sr == 0 { "driver default".to_string() } else { format!("{sr} Hz") }).show_ui(ui, |ui| {
                 ui.selectable_value(sr, 0, "driver default");
                 for r in [44100, 48000, 88200, 96000, 176400, 192000] {
@@ -178,13 +178,11 @@ fn system(app: &mut App, ctx: &egui::Context, p: &mut MixParams) {
         });
         ui.horizontal(|ui| {
             if ui.button("Restart Audio Engine").clicked() {
-                app.restart_engine();
+                app.session.restart_engine();
             }
             if let Some(a) = &st.asio {
                 if ui.button("ASIO Control Panel...").on_hover_text("Opens the driver's own settings (buffer size, clock)").clicked() {
-                    if let Some(e) = &app.engine {
-                        e.asio_control_panel();
-                    }
+                    app.session.asio_control_panel();
                 }
                 ui.label(RichText::new(format!("{}: {} samples ({:.1} ms)", a.driver, a.buffer, a.buffer as f32 * 1000.0 / a.sample_rate.max(1) as f32)).color(TEXT_DIM));
             }
@@ -199,13 +197,13 @@ fn system(app: &mut App, ctx: &egui::Context, p: &mut MixParams) {
         }
         ui.separator();
         ui.heading("Audio Points");
-        let (ins, outs) = app.devices.clone();
+        let (ins, outs) = app.session.devices.clone();
         let mut restart = false;
         egui::Grid::new("points").num_columns(3).striped(true).show(ui, |ui| {
             for s in 0..NUM_STRIPS {
                 ui.label(if is_virtual_strip(s) { format!("Virtual Input #{}", s - NUM_HW_STRIPS + 1) } else { format!("Hardware Input #{}", s + 1) });
-                if let Some(sel) = device_combo(ui, &format!("in{s}"), &app.settings.device.inputs[s], &[], &ins) {
-                    app.settings.device.inputs[s] = sel;
+                if let Some(sel) = device_combo(ui, &format!("in{s}"), &app.session.settings.device.inputs[s], &[], &ins) {
+                    app.session.settings.device.inputs[s] = sel;
                     restart = true;
                 }
                 ui.label(RichText::new(st.points[s].clone().unwrap_or("-".into())).size(10.5).color(TEXT_DIM));
@@ -213,9 +211,9 @@ fn system(app: &mut App, ctx: &egui::Context, p: &mut MixParams) {
             }
             for b in 0..NUM_BUSES {
                 ui.label(format!("Output {}", BUS_NAMES[b]));
-                let asio = if b == 0 { app.asio_drivers.clone() } else { Vec::new() };
-                if let Some(sel) = device_combo(ui, &format!("out{b}"), &app.settings.device.outputs[b], &asio, &outs) {
-                    app.settings.device.outputs[b] = sel;
+                let asio = if b == 0 { app.session.asio_drivers.clone() } else { Vec::new() };
+                if let Some(sel) = device_combo(ui, &format!("out{b}"), &app.session.settings.device.outputs[b], &asio, &outs) {
+                    app.session.settings.device.outputs[b] = sel;
                     restart = true;
                 }
                 ui.label(RichText::new(st.points[NUM_STRIPS + b].clone().unwrap_or("-".into())).size(10.5).color(TEXT_DIM));
@@ -223,7 +221,7 @@ fn system(app: &mut App, ctx: &egui::Context, p: &mut MixParams) {
             }
         });
         if restart {
-            app.restart_engine();
+            app.session.restart_engine();
         }
         ui.separator();
         ui.heading("PATCH COMPOSITE");
@@ -249,8 +247,8 @@ fn system(app: &mut App, ctx: &egui::Context, p: &mut MixParams) {
             }
         });
         ui.separator();
-        ui.checkbox(&mut app.settings.monitor_on_sel, "Monitor on SEL (stored for compatibility)");
-        ui.checkbox(&mut app.settings.slider_relative, "Relative sliders (stored for compatibility)");
+        ui.checkbox(&mut app.session.settings.monitor_on_sel, "Monitor on SEL (stored for compatibility)");
+        ui.checkbox(&mut app.session.settings.slider_relative, "Relative sliders (stored for compatibility)");
     });
 }
 
@@ -258,7 +256,7 @@ fn system(app: &mut App, ctx: &egui::Context, p: &mut MixParams) {
 
 fn recorder(app: &mut App, ctx: &egui::Context) {
     window!(app, ctx, recorder, "Tape Recorder Options", |ui| {
-        let r = &mut app.settings.recorder;
+        let r = &mut app.session.settings.recorder;
         egui::Grid::new("rec").num_columns(2).show(ui, |ui| {
             ui.label("Target Directory:");
             ui.horizontal(|ui| {
@@ -311,7 +309,7 @@ fn recorder(app: &mut App, ctx: &egui::Context) {
             r.dont_play = !play_on_load;
         }
         if ui.checkbox(&mut r.loop_play, "Loop playback").changed() {
-            app.shared.tape.loop_play.store(r.loop_play, Ordering::Relaxed);
+            app.session.shared.tape.loop_play.store(r.loop_play, Ordering::Relaxed);
         }
         ui.separator();
         ui.label(RichText::new("Recorded sources (mixed together):").strong());
@@ -328,7 +326,7 @@ fn recorder(app: &mut App, ctx: &egui::Context) {
             }
         });
         let r = r.clone();
-        app.shared.tape.set_arm(&r);
+        app.session.shared.tape.set_arm(&r);
         ui.label(RichText::new("MP3 / AIFF encoding and pre-recording are not implemented.").color(TEXT_DIM).size(11.0));
     });
 }
@@ -356,7 +354,7 @@ fn midi_dlg(app: &mut App, ctx: &egui::Context) {
             ui.end_row();
         };
         egui::Grid::new("mididev").num_columns(2).show(ui, |ui| {
-            let d = &mut app.settings.device;
+            let d = &mut app.session.settings.device;
             pick(ui, "mi1", "M.I.D.I. Input Device:", &mut d.midi_in[0], &ins);
             pick(ui, "mi2", "M.I.D.I. Extra Input Device:", &mut d.midi_in[1], &ins);
             pick(ui, "mo1", "M.I.D.I. Output Device (feedback):", &mut d.midi_out, &outs);
@@ -454,8 +452,8 @@ fn midi_dlg(app: &mut App, ctx: &egui::Context) {
 
 fn vban_dlg(app: &mut App, ctx: &egui::Context) {
     window!(app, ctx, vban, "VB-Audio Network Configuration (VBAN)", |ui| {
-        let stats = app.shared.vban_stats.clone();
-        let c = &mut app.settings.vban;
+        let stats = app.session.shared.vban_stats.clone();
+        let c = &mut app.session.settings.vban;
         ui.horizontal(|ui| {
             ui.checkbox(&mut c.enabled, RichText::new("VBAN is ON").strong());
             ui.label("Username:");
@@ -542,10 +540,10 @@ fn vban_dlg(app: &mut App, ctx: &egui::Context) {
         });
         ui.horizontal(|ui| {
             if ui.button(RichText::new("Apply (restart engine)").strong()).clicked() {
-                app.restart_engine();
+                app.session.restart_engine();
             }
             if ui.button("Reset VBAN").clicked() {
-                app.settings.vban = Default::default();
+                app.session.settings.vban = Default::default();
             }
         });
         ui.separator();
@@ -556,7 +554,7 @@ fn vban_dlg(app: &mut App, ctx: &egui::Context) {
             });
             ui.text_edit_singleline(&mut app.vban_text_body);
             if ui.button("Send").clicked() {
-                let name = app.settings.vban.command_in.name.clone();
+                let name = app.session.settings.vban.command_in.name.clone();
                 let r = app
                     .vban_text_dest
                     .parse()
@@ -583,7 +581,7 @@ fn presets(app: &mut App, ctx: &egui::Context) {
         egui::Grid::new("presets").num_columns(5).striped(true).show(ui, |ui| {
             for i in 0..NUM_PRESETS {
                 let entry = app.preset_names.get(i).cloned().flatten();
-                let current = app.options.last_preset == i as i32;
+                let current = app.session.options.last_preset == i as i32;
                 let label = match &entry {
                     Some((n, _)) => format!("{:02} - {}", i + 1, n),
                     None => format!("{:02} - Empty Preset", i + 1),
@@ -594,11 +592,11 @@ fn presets(app: &mut App, ctx: &egui::Context) {
                     if let Some(pr) = Preset::load(i) {
                         let mut s = app.snapshot_settings();
                         let dev_changed = pr.apply_to(&mut s);
-                        *app.shared.params.lock() = s.params;
-                        app.settings = s;
-                        app.options.last_preset = i as i32;
+                        *app.session.shared.params.lock() = s.params;
+                        app.session.settings = s;
+                        app.session.options.last_preset = i as i32;
                         if dev_changed {
-                            app.restart_engine();
+                            app.session.restart_engine();
                         }
                         app.send_midi_feedback();
                     }
@@ -790,7 +788,7 @@ fn console(app: &mut App, ctx: &egui::Context) {
         }
         ui.separator();
         egui::ScrollArea::vertical().max_height(220.0).stick_to_bottom(true).show(ui, |ui| {
-            for l in &app.console_log {
+            for l in &app.session.console_log {
                 let col = if l.contains("error") { RED } else { TEXT_DIM };
                 ui.label(RichText::new(l).monospace().size(11.0).color(col));
             }
@@ -828,9 +826,9 @@ fn rename(app: &mut App, ctx: &egui::Context) {
                 // Store an empty label when it equals the default, so defaults stay defaults.
                 let stored = if t == default_name { String::new() } else { t.to_string() };
                 if is_strip {
-                    app.settings.labels.strips[idx] = stored;
+                    app.session.settings.labels.strips[idx] = stored;
                 } else {
-                    app.settings.labels.buses[idx] = stored;
+                    app.session.settings.labels.buses[idx] = stored;
                 }
                 keep = false;
             }
