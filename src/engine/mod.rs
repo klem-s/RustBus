@@ -7,6 +7,8 @@
 pub mod asio;
 pub mod mixer;
 pub mod ring;
+#[cfg(test)]
+mod golden;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Sender;

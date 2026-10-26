@@ -638,3 +638,50 @@ mod virtual3_tests {
         assert_eq!(m.buses[0][7][255], 0.0);
     }
 }
+
+#[cfg(test)]
+mod golden_tests {
+    use super::*;
+    use crate::engine::golden::{level, params, Fnv, Lcg};
+
+    // Characterization golden: must not change during refactor Phases 2-5.
+    const GOLDEN_MIXER_HASH: u64 = 0x1ba5_067f_9cb1_c152;
+
+    /// 64 blocks × 256 frames @48 kHz of seeded input through every strip and the tape;
+    /// hashes all bus channels of every block.
+    #[test]
+    fn golden_mixer_output() {
+        let p = params();
+        let mut m = Mixer::new(48000.0);
+        let meters = Meters::default();
+        let mut rng = Lcg::new(0x5eed_0001);
+        let mut h = Fnv::new();
+        let mut peak = [0.0f32; NUM_BUSES];
+        const FRAMES: usize = 256;
+        for b in 0..64 {
+            let a = level(b);
+            m.clear_inputs(FRAMES);
+            for s in 0..NUM_STRIPS {
+                for c in 0..strip_channels(s) {
+                    for x in m.inputs[s][c][..FRAMES].iter_mut() {
+                        *x = a * rng.next();
+                    }
+                }
+            }
+            for t in m.tape.iter_mut() {
+                for x in t[..FRAMES].iter_mut() {
+                    *x = a * rng.next();
+                }
+            }
+            m.process(&p, FRAMES, &meters);
+            for (bus, pk) in m.buses.iter().zip(peak.iter_mut()) {
+                for c in bus.iter() {
+                    h.samples(&c[..FRAMES]);
+                    *pk = c[..FRAMES].iter().fold(*pk, |a, x| a.max(x.abs()));
+                }
+            }
+        }
+        assert!(peak.iter().all(|&x| x > 1e-3), "every bus carries signal: {peak:?}");
+        assert_eq!(h.finish(), GOLDEN_MIXER_HASH, "got {:#018x}", h.finish());
+    }
+}
