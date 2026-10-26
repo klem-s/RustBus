@@ -1441,9 +1441,15 @@ impl eframe::App for App {
 
         dialogs::show(self, ctx, &mut p);
 
-        if p != before {
-            *self.shared.params.lock() = p;
-        }
+        // Write back only the fields edited this frame, so concurrent writes to the shared params
+        // (MIDI, hotkey, tray, and in-frame preset recall / console / reset) are not clobbered.
+        let p = {
+            let mut shared = self.shared.params.lock();
+            if p != before {
+                rustbus::params::merge(&before, &p, &mut shared);
+            }
+            *shared
+        };
         if let Some(t) = &self.tray {
             t.set_mic_muted(p.strips[self.options.hotkey.strip.min(NUM_STRIPS - 1)].mute);
         }
