@@ -269,9 +269,10 @@ enum Master {
 }
 
 /// Start A1 (or the internal clock when there is none). If A1 cannot be opened, started
-/// or (WASAPI) played, the Core comes back
-/// with the error to report, so the caller can fall back to the internal clock.
-fn start_master(a1: Option<A1>, core: Core, status: &mut EngineStatus, wake: Arc<dyn Fn() + Send + Sync>) -> Result<Master, (String, Core)> {
+/// or (WASAPI) played, the error comes back with the Core so the caller can fall back to
+/// the internal clock. The Core is `None` if a driver ran the callback (which took it)
+/// before its start failed.
+fn start_master(a1: Option<A1>, core: Core, status: &mut EngineStatus, wake: Arc<dyn Fn() + Send + Sync>) -> Result<Master, (String, Option<Core>)> {
     let Some(a1) = a1 else { return Ok(internal_clock(core)) };
     let shared = core.shared.clone();
     let sr = core.sr;
@@ -305,9 +306,9 @@ fn start_master(a1: Option<A1>, core: Core, status: &mut EngineStatus, wake: Arc
                 Ok(stream) => {
                     if let Err(e) = stream.play() {
                         match take_back_unstarted(&slot, &e) {
-                            Some(back) => {
+                            Some((e, core)) => {
                                 drop(stream);
-                                return Err(back);
+                                return Err((e, Some(core)));
                             }
                             None => status.errors.push(format!("Device Not Started: {e}")),
                         }
@@ -320,7 +321,7 @@ fn start_master(a1: Option<A1>, core: Core, status: &mut EngineStatus, wake: Arc
             }
         }
     };
-    started.map_err(|e| (e, slot.lock().take().expect("core still present")))
+    started.map_err(|e| (e, slot.lock().take()))
 }
 
 /// The A1 stream was built but `play()` failed: take the Core back so the caller falls
@@ -404,8 +405,8 @@ impl Engine {
 
         // ---- start the clock, falling back to the internal one
         let master = match start_master(a1, core, &mut status, wake) {
-            Ok(m) => m,
-            Err((e, mut core)) => {
+            Ok(m) => Some(m),
+            Err((e, Some(mut core))) => {
                 status.errors.push(e);
                 core.direct.clear();
                 for s in 0..NUM_HW_STRIPS {
@@ -413,10 +414,17 @@ impl Engine {
                         status.points[s] = None;
                     }
                 }
-                internal_clock(core)
+                Some(internal_clock(core))
+            }
+            Err((e, None)) => {
+                // The driver called back before failing to start and took the Core with it.
+                status.errors.push(format!("{e}
+No master clock running: restart the audio engine."));
+                status.master = "No Master CLOCK".into();
+                None
             }
         };
-        if let Master::Internal(..) = master {
+        if let Some(Master::Internal(..)) = master {
             status.master = "Internal Master CLOCK".into();
         }
         for s in &streams {
@@ -427,7 +435,7 @@ impl Engine {
         status.running = true;
         status.sample_rate = sr;
         *shared.status.lock() = status;
-        Engine { streams, master: Some(master), vban: Some(vban) }
+        Engine { streams, master, vban: Some(vban) }
     }
 
     /// Open the ASIO driver's own settings panel (A1 on ASIO only).
