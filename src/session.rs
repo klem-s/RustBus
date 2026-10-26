@@ -491,3 +491,119 @@ pub fn save_bus_eq(path: &Path, params: &MixParams, b: usize) -> std::io::Result
 pub fn load_bus_eq(path: &Path) -> Result<[BusEqChannel; MAX_CH], String> {
     std::fs::read_to_string(path).map_err(|e| e.to_string()).and_then(|t| settings::bus_eq_from_file_xml(&t))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::params::EqType;
+    use crate::settings::DEV_ASIO;
+
+    // No device is configured (or only an ASIO input, which is never opened without an ASIO
+    // A1), so every engine runs from the internal clock.
+    fn session(settings: Settings) -> Session {
+        Session::new(settings, AppOptions::default(), Arc::new(|| {}))
+    }
+
+    fn temp_path(name: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!("rustbus-session-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        dir.join(name)
+    }
+
+    fn engine_lines(s: &Session) -> usize {
+        s.console_log.iter().filter(|l| l.starts_with("[engine]")).count()
+    }
+
+    #[test]
+    fn engine_starts_on_the_internal_clock() {
+        let mut s = session(Settings::default());
+        s.restart_engine();
+        let st = s.shared.status.lock().clone();
+        assert!(st.running);
+        assert_eq!(st.master, "Internal Master CLOCK");
+        assert!(st.errors.is_empty(), "{:?}", st.errors);
+        s.stop_engine();
+    }
+
+    #[test]
+    fn apply_then_snapshot_round_trips() {
+        let mut want = Settings::default();
+        want.params.strips[0].gain_db = -6.0;
+        want.params.buses[2].mute = true;
+        want.labels.strips[1] = "Mic".into();
+        want.midi.name = "Desk".into();
+        want.recorder.loop_play = true;
+        want.vban.username = "rb".into();
+
+        let mut s = session(Settings::default());
+        s.apply_settings(want.clone());
+        assert_eq!(*s.shared.params.lock(), want.params);
+        assert_eq!(s.midi_map.lock().name, "Desk");
+        assert!(s.shared.tape.loop_play.load(Ordering::Relaxed));
+        assert_eq!(s.snapshot_settings().to_xml(), want.to_xml());
+
+        // Live edits (GUI, MIDI, scripts) land in the shared params and MIDI map.
+        s.shared.params.lock().strips[3].gain_db = 3.0;
+        s.midi_map.lock().name = "Desk 2".into();
+        want.params.strips[3].gain_db = 3.0;
+        want.midi.name = "Desk 2".into();
+        assert_eq!(s.snapshot_settings().to_xml(), want.to_xml());
+
+        // Through a file and into a second session.
+        let path = temp_path("roundtrip.xml");
+        s.save_settings_to(&path).unwrap();
+        s.stop_engine();
+        let mut t = session(Settings::default());
+        t.load_settings(&path).unwrap();
+        assert_eq!(t.snapshot_settings().to_xml(), want.to_xml());
+        t.stop_engine();
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn restart_requests_coalesce_until_the_next_tick() {
+        let mut cfg = Settings::default();
+        // One engine error per start, so each restart leaves one console line.
+        cfg.device.inputs[0] = Some(DeviceRef { kind: DEV_ASIO, name: "RustBus Test Missing ASIO".into() });
+        let mut s = session(cfg);
+        s.restart_engine();
+        assert_eq!(engine_lines(&s), 1);
+
+        s.request_restart();
+        s.set_bus_device(1, None);
+        s.run_script("Command.Restart = 1;", "console");
+        assert_eq!(engine_lines(&s), 1, "requests wait for the tick");
+        s.tick();
+        assert_eq!(engine_lines(&s), 2, "one restart for all requests");
+        s.tick();
+        assert_eq!(engine_lines(&s), 2);
+
+        // An immediate restart does not wait.
+        s.restart_engine();
+        assert_eq!(engine_lines(&s), 3);
+        s.stop_engine();
+    }
+
+    #[test]
+    fn script_reset_is_left_for_the_gui() {
+        let mut s = session(Settings::default());
+        s.run_script("Command.Reset = 1;", "console");
+        assert!(s.reset_requested);
+        assert_eq!(s.settings, Settings::default());
+        assert_eq!(s.console_log, ["[console] ok: Command.Reset = 1;"]);
+    }
+
+    #[test]
+    fn bus_eq_file_round_trips() {
+        let mut p = MixParams::default();
+        let ch = &mut p.buses[4].eq[0];
+        ch.cells[2] = crate::params::EqCell { on: true, kind: EqType::HighShelf, gain_db: -4.5, freq: 3150.0, q: 0.75 };
+        ch.trim_db = 1.5;
+        ch.delay_ms = 12.25;
+        p.buses[4].eq[5] = p.buses[4].eq[0];
+        let path = temp_path("buseq.xml");
+        save_bus_eq(&path, &p, 4).unwrap();
+        assert_eq!(load_bus_eq(&path).unwrap(), p.buses[4].eq);
+        let _ = std::fs::remove_file(path);
+    }
+}
