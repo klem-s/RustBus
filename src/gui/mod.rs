@@ -5,7 +5,6 @@ mod dialogs;
 mod theme;
 mod widgets;
 
-use std::path::PathBuf;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Duration;
@@ -18,7 +17,7 @@ use rustbus::options::AppOptions;
 use rustbus::params::*;
 use rustbus::script::TapeCmd;
 use rustbus::session::Session;
-use rustbus::settings::{self, DeviceRef, Settings, DEV_ASIO};
+use rustbus::settings::{self, DeviceRef, DEV_ASIO};
 
 use theme::*;
 use widgets::*;
@@ -69,7 +68,6 @@ pub(crate) struct App {
     pub console_input: String,
     pub clipboard_strip: Option<StripParams>,
     pub preset_with_devices: bool,
-    pub preset_names: Vec<Option<(String, String)>>,
     pub vban_text_dest: String,
     pub vban_text_body: String,
     pub preset_name: String,
@@ -94,20 +92,7 @@ impl App {
         let ctx = cc.egui_ctx.clone();
         let wake: Arc<dyn Fn() + Send + Sync> = Arc::new(move || ctx.request_repaint());
 
-        let mut startup_error = None;
-        let path = if options.use_startup_file && !options.startup_file.is_empty() {
-            PathBuf::from(&options.startup_file)
-        } else {
-            settings::last_settings_path()
-        };
-        let settings = if path.exists() {
-            Settings::load(&path).unwrap_or_else(|e| {
-                startup_error = Some(e);
-                Settings::default()
-            })
-        } else {
-            Settings::default()
-        };
+        let (settings, startup_error) = Session::startup_settings(&options);
         let mut session = Session::new(settings, options, wake);
         session.refresh_devices();
         session.refresh_midi_ports();
@@ -120,7 +105,6 @@ impl App {
             console_input: String::new(),
             clipboard_strip: None,
             preset_with_devices: false,
-            preset_names: Vec::new(),
             vban_text_dest: "127.0.0.1:6980".into(),
             vban_text_body: "Strip[0].Mute = 1;".into(),
             preset_name: "Scene".into(),
@@ -137,7 +121,7 @@ impl App {
         }
         app.tray = desktop::Tray::new(cc.egui_ctx.clone(), app.session.shared.params.clone(), app.session.mic_strip.clone());
         desktop::refresh_autostart();
-        app.refresh_presets();
+        app.session.refresh_presets();
         app.session.restart_engine();
         app.session.restart_midi();
         app.session.restart_hotkey();
@@ -195,17 +179,15 @@ impl App {
         } else if close && self.session.options.sys_tray && self.tray.is_some() {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             // Frames stop while hidden, so save now rather than relying on the autosave.
-            let _ = self.session.save_settings_to(&settings::last_settings_path());
-            self.session.options.save();
+            self.session.save_now();
             desktop::hide_window();
         }
     }
 
     pub fn load_settings_dialog(&mut self, as_startup: bool) {
         if let Some(p) = rfd::FileDialog::new().add_filter("XML", &["xml"]).set_title("Load Settings...").pick_file() {
-            match Settings::load(&p) {
-                Ok(s) => {
-                    self.session.apply_settings(s);
+            match self.session.load_settings(&p) {
+                Ok(()) => {
                     if as_startup {
                         self.session.options.use_startup_file = true;
                         self.session.options.startup_file = p.to_string_lossy().into();
@@ -223,10 +205,6 @@ impl App {
                 self.dlg.message = Some(("Save Error".into(), e));
             }
         }
-    }
-
-    pub fn refresh_presets(&mut self) {
-        self.preset_names = rustbus::presets::list().into_iter().map(|p| p.map(|p| (p.name, p.timestamp))).collect();
     }
 
     fn poll_background(&mut self, ctx: &egui::Context) {
@@ -1158,12 +1136,7 @@ impl eframe::App for App {
     }
 
     fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
-        self.session.finish_recording();
-        let s = self.session.snapshot_settings();
-        let _ = s.save(&settings::last_settings_path());
-        let _ = settings::rotate_daily_backup(&s.to_xml());
-        self.session.options.save();
-        self.session.stop_engine();
+        self.session.shutdown();
     }
 }
 

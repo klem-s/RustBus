@@ -722,6 +722,35 @@ fn read_route(n: Node, route: &mut [bool; NUM_BUSES]) {
     }
 }
 
+/// Standalone bus EQ file (`VBAudioVoicemeeterBUSEQConfig`).
+pub fn bus_eq_file_xml(params: &MixParams, b: usize) -> String {
+    let full = Settings { params: *params, ..Default::default() }.to_xml();
+    let mut o = String::from("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<VBAudioVoicemeeterBUSEQConfig>\n<VoiceMeeterBUSEQ>\n");
+    let tag = format!("\t<Bus index='{}' ", b + 1);
+    for line in full.lines().filter(|l| l.starts_with(&tag) && l.contains("channel=")) {
+        o.push_str(line);
+        o.push('\n');
+    }
+    o.push_str("</VoiceMeeterBUSEQ>\n</VBAudioVoicemeeterBUSEQConfig>\n");
+    o
+}
+
+/// The EQ of a standalone bus EQ file (its first bus).
+pub fn bus_eq_from_file_xml(text: &str) -> Result<[BusEqChannel; MAX_CH], String> {
+    // Re-use the settings parser by wrapping the EQ block as bus 1 parameters.
+    let doc = Document::parse(text).map_err(|e| e.to_string())?;
+    let sec = doc.descendants().find(|n| n.has_tag_name("VoiceMeeterBUSEQ")).ok_or("no VoiceMeeterBUSEQ element")?;
+    let mut lines = String::new();
+    for n in sec.children().filter(|n| n.has_tag_name("Bus")) {
+        let mut attrs: Vec<String> = n.attributes().filter(|a| a.name() != "index").map(|a| format!("{}='{}'", a.name(), a.value())).collect();
+        attrs.insert(0, "index='1'".into());
+        lines.push_str(&format!("<Bus {} />\n", attrs.join(" ")));
+    }
+    let wrapped = format!("<VBAudioVoicemeeterSettings><VoiceMeeterParameters><VoiceMeeterBUSEQ>{lines}</VoiceMeeterBUSEQ></VoiceMeeterParameters></VBAudioVoicemeeterSettings>");
+    let s = Settings::from_xml(&wrapped)?;
+    Ok(s.params.buses[0].eq)
+}
+
 fn read_strip_attrs(n: Node, s: &mut StripParams) {
     for a in n.attributes() {
         let v = a.value();

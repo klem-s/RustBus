@@ -15,6 +15,8 @@ use crate::engine::{list_asio, list_devices, Engine, Shared};
 use crate::hotkey::HotkeyRuntime;
 use crate::midi::{self, LearnState, MidiMap, MidiRuntime};
 use crate::options::AppOptions;
+use crate::params::{BusEqChannel, MixParams, MAX_CH};
+use crate::presets::{self, Preset};
 use crate::recorder::{self, RecorderJob, SEEK_SECONDS};
 use crate::script::{self, Effect, TapeCmd};
 use crate::settings::{self, DeviceRef, Settings, DEV_WDM};
@@ -35,6 +37,8 @@ pub struct Session {
     hotkey: Option<HotkeyRuntime>,
     /// Strip the tray "Mute mic" item toggles (follows the hotkey strip).
     pub mic_strip: Arc<AtomicIsize>,
+    /// Preset slots: (name, timestamp) of the stored ones.
+    pub preset_names: Vec<Option<(String, String)>>,
     /// Engine, MIDI and script messages shown in the command console.
     pub console_log: Vec<String>,
     text_tx: Sender<String>,
@@ -76,6 +80,7 @@ impl Session {
             midi: None,
             hotkey: None,
             mic_strip: Arc::new(AtomicIsize::new(0)),
+            preset_names: Vec::new(),
             console_log: Vec::new(),
             text_tx,
             text_rx,
@@ -89,6 +94,23 @@ impl Session {
             last_autosave: Instant::now(),
             message: None,
             reset_requested: false,
+        }
+    }
+
+    /// The settings to start with: the startup file if one is set, else the last settings;
+    /// defaults (and the load error) when that file cannot be read.
+    pub fn startup_settings(options: &AppOptions) -> (Settings, Option<String>) {
+        let path = if options.use_startup_file && !options.startup_file.is_empty() {
+            PathBuf::from(&options.startup_file)
+        } else {
+            settings::last_settings_path()
+        };
+        if !path.exists() {
+            return (Settings::default(), None);
+        }
+        match Settings::load(&path) {
+            Ok(s) => (s, None),
+            Err(e) => (Settings::default(), Some(e)),
         }
     }
 
@@ -116,7 +138,7 @@ impl Session {
     /// Run the pending restarts: the delayed ones after a device failure or a driver reset
     /// request, then the one asked for with `request_restart`.
     fn poll_restart(&mut self) {
-        // Device failure → auto restart (menu "Auto Restart Audio Engine").
+        // Device failure â†’ auto restart (menu "Auto Restart Audio Engine").
         if self.shared.device_error.load(Ordering::Relaxed) && self.options.auto_restart && self.restart_at.is_none() {
             self.restart_at = Some(Instant::now() + Duration::from_secs(2));
         }
@@ -238,6 +260,70 @@ impl Session {
         self.settings = s;
         self.restart_engine();
         self.restart_midi();
+    }
+
+    /// Load a settings file and apply it.
+    pub fn load_settings(&mut self, path: &Path) -> Result<(), String> {
+        let s = Settings::load(path)?;
+        self.apply_settings(s);
+        Ok(())
+    }
+
+    /// Save the last settings and the options now (the window is being hidden to the tray).
+    pub fn save_now(&mut self) {
+        let _ = self.save_settings_to(&settings::last_settings_path());
+        self.options.save();
+    }
+
+    /// End of the session: finish a recording, save settings, the daily backup and the
+    /// options, and stop the engine.
+    pub fn shutdown(&mut self) {
+        self.finish_recording();
+        let s = self.snapshot_settings();
+        let _ = s.save(&settings::last_settings_path());
+        let _ = settings::rotate_daily_backup(&s.to_xml());
+        self.options.save();
+        self.stop_engine();
+    }
+
+    pub fn load_midi_map(&mut self, path: &Path) -> Result<(), String> {
+        let m = std::fs::read_to_string(path).map_err(|e| e.to_string()).and_then(|t| MidiMap::from_file_xml(&t))?;
+        *self.midi_map.lock() = m;
+        Ok(())
+    }
+
+    pub fn save_midi_map(&self, path: &Path) -> std::io::Result<()> {
+        std::fs::write(path, self.midi_map.lock().to_file_xml())
+    }
+
+    // ------------------------------------------------------------ presets
+
+    pub fn refresh_presets(&mut self) {
+        self.preset_names = presets::list().into_iter().map(|p| p.map(|p| (p.name, p.timestamp))).collect();
+    }
+
+    /// Recall preset slot `i` (restarting the engine now if it changes devices).
+    pub fn recall_preset(&mut self, i: usize) {
+        if let Some(pr) = Preset::load(i) {
+            let mut s = self.snapshot_settings();
+            let dev_changed = pr.apply_to(&mut s);
+            *self.shared.params.lock() = s.params;
+            self.settings = s;
+            self.options.last_preset = i as i32;
+            if dev_changed {
+                self.restart_engine();
+            }
+            self.send_midi_feedback();
+        }
+    }
+
+    pub fn store_preset(&mut self, i: usize, name: &str, with_devices: bool) -> std::io::Result<()> {
+        let s = self.snapshot_settings();
+        Preset::capture(name, &s, with_devices).store(i)
+    }
+
+    pub fn delete_preset(&self, i: usize) {
+        Preset::delete(i);
     }
 
     // ------------------------------------------------------------ devices
@@ -394,4 +480,14 @@ impl Session {
             Effect::Reset => self.reset_requested = true,
         }
     }
+}
+
+/// Save bus `b`'s EQ of `params` as a standalone bus EQ file.
+pub fn save_bus_eq(path: &Path, params: &MixParams, b: usize) -> std::io::Result<()> {
+    std::fs::write(path, settings::bus_eq_file_xml(params, b))
+}
+
+/// Read the EQ from a standalone bus EQ file.
+pub fn load_bus_eq(path: &Path) -> Result<[BusEqChannel; MAX_CH], String> {
+    std::fs::read_to_string(path).map_err(|e| e.to_string()).and_then(|t| settings::bus_eq_from_file_xml(&t))
 }

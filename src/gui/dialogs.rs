@@ -10,7 +10,8 @@ use rustbus::engine::mixer::composite_label;
 use rustbus::hotkey::{self, HotkeyMode};
 use rustbus::midi::{self, MidiMap};
 use rustbus::params::*;
-use rustbus::presets::{Preset, NUM_PRESETS};
+use rustbus::presets::NUM_PRESETS;
+use rustbus::session;
 use rustbus::settings::{DeviceRef, Settings, DEV_ASIO, DEV_WDM, FILE_BWF, FILE_WAV};
 use rustbus::vban::{self, FORMAT_NAMES, NQ_NAMES, SR_TABLE};
 
@@ -376,15 +377,14 @@ fn midi_dlg(app: &mut App, ctx: &egui::Context) {
             }
             if ui.button("Load M.I.D.I. Map...").clicked() {
                 if let Some(f) = rfd::FileDialog::new().add_filter("XML", &["xml"]).pick_file() {
-                    match std::fs::read_to_string(&f).map_err(|e| e.to_string()).and_then(|t| MidiMap::from_file_xml(&t)) {
-                        Ok(m) => *app.session.midi_map.lock() = m,
-                        Err(e) => app.dlg.message = Some(("M.I.D.I.".into(), e)),
+                    if let Err(e) = app.session.load_midi_map(&f) {
+                        app.dlg.message = Some(("M.I.D.I.".into(), e));
                     }
                 }
             }
             if ui.button("Save Current M.I.D.I. Map...").clicked() {
                 if let Some(f) = rfd::FileDialog::new().add_filter("XML", &["xml"]).set_file_name("MidiMap.xml").save_file() {
-                    let _ = std::fs::write(f, app.session.midi_map.lock().to_file_xml());
+                    let _ = app.session.save_midi_map(&f);
                 }
             }
             if ui.button("Refresh (send feedback)").clicked() {
@@ -581,7 +581,7 @@ fn presets(app: &mut App, ctx: &egui::Context) {
         let mut refresh = false;
         egui::Grid::new("presets").num_columns(5).striped(true).show(ui, |ui| {
             for i in 0..NUM_PRESETS {
-                let entry = app.preset_names.get(i).cloned().flatten();
+                let entry = app.session.preset_names.get(i).cloned().flatten();
                 let current = app.session.options.last_preset == i as i32;
                 let label = match &entry {
                     Some((n, _)) => format!("{:02} - {}", i + 1, n),
@@ -590,35 +590,23 @@ fn presets(app: &mut App, ctx: &egui::Context) {
                 ui.label(if current { RichText::new(label).color(ACCENT).strong() } else { RichText::new(label) });
                 ui.label(RichText::new(entry.as_ref().map(|e| e.1.clone()).unwrap_or_default()).size(10.5).color(TEXT_DIM));
                 if ui.add_enabled(entry.is_some(), egui::Button::new("Recall")).clicked() {
-                    if let Some(pr) = Preset::load(i) {
-                        let mut s = app.session.snapshot_settings();
-                        let dev_changed = pr.apply_to(&mut s);
-                        *app.session.shared.params.lock() = s.params;
-                        app.session.settings = s;
-                        app.session.options.last_preset = i as i32;
-                        if dev_changed {
-                            app.session.restart_engine();
-                        }
-                        app.session.send_midi_feedback();
-                    }
+                    app.session.recall_preset(i);
                 }
                 if ui.button(if entry.is_some() { "Overwrite" } else { "Store" }).clicked() {
-                    let s = app.session.snapshot_settings();
-                    let pr = Preset::capture(&app.preset_name, &s, app.preset_with_devices);
-                    if let Err(e) = pr.store(i) {
+                    if let Err(e) = app.session.store_preset(i, &app.preset_name, app.preset_with_devices) {
                         app.dlg.message = Some(("Preset".into(), e.to_string()));
                     }
                     refresh = true;
                 }
                 if ui.add_enabled(entry.is_some(), egui::Button::new("Delete")).clicked() {
-                    Preset::delete(i);
+                    app.session.delete_preset(i);
                     refresh = true;
                 }
                 ui.end_row();
             }
         });
         if refresh {
-            app.refresh_presets();
+            app.session.refresh_presets();
         }
         ui.label(RichText::new(format!("Scenes are stored in {}", rustbus::presets::preset_dir().display())).size(10.5).color(TEXT_DIM));
     });
@@ -702,13 +690,12 @@ fn bus_eq(app: &mut App, ctx: &egui::Context, p: &mut MixParams) {
         ui.horizontal(|ui| {
             if ui.button("Save EQ Settings...").clicked() {
                 if let Some(f) = rfd::FileDialog::new().add_filter("XML", &["xml"]).set_file_name("BusEQ.xml").save_file() {
-                    let s = Settings { params: *p, ..Default::default() };
-                    let _ = std::fs::write(f, bus_eq_file(&s, b));
+                    let _ = session::save_bus_eq(&f, p, b);
                 }
             }
             if ui.button("Load EQ Settings...").clicked() {
                 if let Some(f) = rfd::FileDialog::new().add_filter("XML", &["xml"]).pick_file() {
-                    match std::fs::read_to_string(f).map_err(|e| e.to_string()).and_then(|t| load_bus_eq_file(&t)) {
+                    match session::load_bus_eq(&f) {
                         Ok(eq) => p.buses[b].eq = eq,
                         Err(e) => app.dlg.message = Some(("EQ".into(), e)),
                     }
@@ -719,34 +706,6 @@ fn bus_eq(app: &mut App, ctx: &egui::Context, p: &mut MixParams) {
     if !open {
         app.dlg.bus_eq = None;
     }
-}
-
-/// Standalone bus EQ file (`VBAudioVoicemeeterBUSEQConfig`).
-fn bus_eq_file(s: &Settings, b: usize) -> String {
-    let full = s.to_xml();
-    let mut o = String::from("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<VBAudioVoicemeeterBUSEQConfig>\n<VoiceMeeterBUSEQ>\n");
-    let tag = format!("\t<Bus index='{}' ", b + 1);
-    for line in full.lines().filter(|l| l.starts_with(&tag) && l.contains("channel=")) {
-        o.push_str(line);
-        o.push('\n');
-    }
-    o.push_str("</VoiceMeeterBUSEQ>\n</VBAudioVoicemeeterBUSEQConfig>\n");
-    o
-}
-
-fn load_bus_eq_file(text: &str) -> Result<[BusEqChannel; MAX_CH], String> {
-    // Re-use the settings parser by wrapping the EQ block as bus 1 parameters.
-    let doc = roxmltree::Document::parse(text).map_err(|e| e.to_string())?;
-    let sec = doc.descendants().find(|n| n.has_tag_name("VoiceMeeterBUSEQ")).ok_or("no VoiceMeeterBUSEQ element")?;
-    let mut lines = String::new();
-    for n in sec.children().filter(|n| n.has_tag_name("Bus")) {
-        let mut attrs: Vec<String> = n.attributes().filter(|a| a.name() != "index").map(|a| format!("{}='{}'", a.name(), a.value())).collect();
-        attrs.insert(0, "index='1'".into());
-        lines.push_str(&format!("<Bus {} />\n", attrs.join(" ")));
-    }
-    let wrapped = format!("<VBAudioVoicemeeterSettings><VoiceMeeterParameters><VoiceMeeterBUSEQ>{lines}</VoiceMeeterBUSEQ></VoiceMeeterParameters></VBAudioVoicemeeterSettings>");
-    let s = Settings::from_xml(&wrapped)?;
-    Ok(s.params.buses[0].eq)
 }
 
 fn eq_curve(ui: &mut Ui, ch: &BusEqChannel) {
