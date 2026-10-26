@@ -37,8 +37,10 @@ pub fn run() -> eframe::Result<()> {
     let _ = settings::migrate_legacy_config();
     let options = AppOptions::load();
     let mut vp = egui::ViewportBuilder::default()
-        .with_inner_size([1920.0, 780.0])
-        .with_min_inner_size([960.0, 600.0])
+        // Close to the fitted size; `fit_window` sets the exact size on the first frames.
+        .with_inner_size([1912.0, 740.0])
+        .with_resizable(false)
+        .with_maximize_button(false)
         .with_title("RustBus");
     if let Some((x, y)) = options.win_pos {
         vp = vp.with_position([x, y]);
@@ -106,6 +108,11 @@ pub(crate) struct App {
     pub hotkey_capture: Option<Vec<u16>>,
     /// Started by the Windows startup entry: hide to the tray on the first frame.
     start_hidden: bool,
+    /// Shared bottom edge of all strip and bus cards (last frame / being measured).
+    cards_bottom: f32,
+    cards_bottom_next: f32,
+    /// Window inner size last sent by `fit_window`.
+    fitted_size: Option<Vec2>,
 }
 
 impl App {
@@ -173,6 +180,9 @@ impl App {
             hotkey: None,
             hotkey_capture: None,
             start_hidden: std::env::args().any(|a| a == desktop::TRAY_ARG),
+            cards_bottom: 0.0,
+            cards_bottom_next: 0.0,
+            fitted_size: None,
         };
         if let Some(h) = desktop::hwnd_of(cc) {
             desktop::set_window(h);
@@ -204,6 +214,29 @@ impl App {
         let st = self.shared.status.lock();
         for e in &st.errors {
             self.console_log.push(format!("[engine] {}", e.replace('\n', " ")));
+        }
+    }
+
+    /// Size the window to the mixer (top bar + panels + status line), clamped to the monitor.
+    fn fit_window(&mut self, ctx: &egui::Context, content: Vec2, status_h: f32) {
+        let mut want = Vec2::new(content.x + 48.0, 56.0 + 20.0 + content.y + 24.0 + status_h).round();
+        if let Some(m) = ctx.input(|i| i.viewport().monitor_size) {
+            // Leave room for the taskbar and the title bar.
+            want = want.min(m - Vec2::new(0.0, 80.0));
+        }
+        if self.fitted_size.map_or(true, |s| (s - want).length() > 1.0) {
+            self.fitted_size = Some(want);
+            ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(want));
+        }
+    }
+
+    /// Stretch a strip/bus card's content to the shared bottom line. Call last inside the card.
+    fn align_card_bottom(&mut self, ui: &mut Ui) {
+        let natural = ui.min_rect().bottom() + STRIP_PAD;
+        self.cards_bottom_next = self.cards_bottom_next.max(natural);
+        let h = self.cards_bottom - STRIP_PAD - ui.min_rect().top();
+        if h > ui.min_rect().height() {
+            ui.set_min_height(h);
         }
     }
 
@@ -1063,6 +1096,7 @@ fn menu_header(ui: &mut Ui, title: &str) {
                     });
                 });
             });
+            self.align_card_bottom(ui);
         });
     }
 
@@ -1218,6 +1252,7 @@ fn menu_header(ui: &mut Ui, title: &str) {
                     });
                 });
             });
+            self.align_card_bottom(ui);
         });
     }
 
@@ -1336,11 +1371,18 @@ impl eframe::App for App {
             .exact_height(56.0)
             .frame(egui::Frame::none().fill(TOPBAR).inner_margin(egui::Margin::symmetric(24.0, 12.0)))
             .show(ctx, |ui| self.top_bar(ui, ctx));
-        egui::TopBottomPanel::bottom("status").frame(egui::Frame::none().fill(TOPBAR).inner_margin(egui::Margin::symmetric(24.0, 6.0))).show(ctx, |ui| {
-            let help = if self.options.show_caption_help && !self.help.is_empty() { self.help.clone() } else { String::from(" ") };
-            ui.label(text(help, regular(11.0), TEXT_3));
-        });
-        egui::CentralPanel::default()
+        let status_h = egui::TopBottomPanel::bottom("status")
+            .frame(egui::Frame::none().fill(TOPBAR).inner_margin(egui::Margin::symmetric(24.0, 6.0)))
+            .show(ctx, |ui| {
+                let help = if self.options.show_caption_help && !self.help.is_empty() { self.help.clone() } else { String::from(" ") };
+                ui.label(text(help, regular(11.0), TEXT_3));
+            })
+            .response
+            .rect
+            .height();
+        // Cards stretch to the tallest card's bottom from the last frame.
+        self.cards_bottom = std::mem::take(&mut self.cards_bottom_next);
+        let content = egui::CentralPanel::default()
             .frame(egui::Frame::none().fill(BG).inner_margin(egui::Margin { left: 24.0, right: 24.0, top: 20.0, bottom: 24.0 }))
             .show(ctx, |ui| {
                 egui::ScrollArea::both().auto_shrink([false, false]).show(ui, |ui| {
@@ -1384,9 +1426,18 @@ impl eframe::App for App {
                                 });
                             });
                         });
-                    });
-                });
-            });
+                    })
+                    .response
+                    .rect
+                    .size()
+                })
+                .inner
+            })
+            .inner;
+        if (self.cards_bottom_next - self.cards_bottom).abs() > 0.5 {
+            ctx.request_repaint();
+        }
+        self.fit_window(ctx, content, status_h);
 
         dialogs::show(self, ctx, &mut p);
 
