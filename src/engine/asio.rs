@@ -419,7 +419,7 @@ pub struct AsioInfo {
 }
 
 enum Cmd {
-    Start { process: Process, outputs: usize, on_reset: OnReset, reply: Sender<Result<(), String>> },
+    Start { process: Process, outputs: usize, on_reset: OnReset, reply: Sender<Result<(usize, usize), String>> },
     ControlPanel,
     Close,
 }
@@ -435,6 +435,8 @@ pub struct AsioOpen {
 pub struct AsioStream {
     tx: Sender<Cmd>,
     thread: Option<JoinHandle<()>>,
+    /// Driver-reported input / output latency in samples (`ASIOGetLatencies`).
+    latency: (usize, usize),
 }
 
 /// Load `name` and configure it. `want_sr` / `want_buffer` of 0 keep the driver's choice.
@@ -468,8 +470,7 @@ impl AsioOpen {
         let thread = self.thread.take();
         tx.send(Cmd::Start { process, outputs, on_reset, reply }).map_err(|_| "ASIO driver thread ended".to_string())?;
         let r = rx.recv().unwrap_or_else(|_| Err("ASIO driver thread ended".into()));
-        let stream = AsioStream { tx, thread };
-        r.map(|_| stream)
+        r.map(|latency| AsioStream { tx, thread, latency })
     }
 }
 
@@ -486,6 +487,11 @@ impl AsioStream {
     /// Ask the driver to show its own settings panel.
     pub fn control_panel(&self) {
         let _ = self.tx.send(Cmd::ControlPanel);
+    }
+
+    /// Driver-reported input / output latency in samples (0 when the driver gives none).
+    pub fn latencies(&self) -> (usize, usize) {
+        self.latency
     }
 }
 
@@ -642,7 +648,8 @@ fn run(d: &Driver, info: &AsioInfo, rx: Receiver<Cmd>) {
     }
 }
 
-unsafe fn start(d: &Driver, info: &AsioInfo, process: Process, outputs: usize, reset: SyncSender<String>) -> Result<(), String> {
+/// Returns the driver's input / output latency in samples, valid once the buffers exist.
+unsafe fn start(d: &Driver, info: &AsioInfo, process: Process, outputs: usize, reset: SyncSender<String>) -> Result<(usize, usize), String> {
     let v = d.v();
     let n_in = info.inputs.len();
     let n_out = outputs.min(info.outputs.len());
@@ -676,6 +683,11 @@ unsafe fn start(d: &Driver, info: &AsioInfo, process: Process, outputs: usize, r
         return Err(err);
     }
     let post_output = (v.output_ready)(d.0) == ASE_OK;
+    let (mut lat_in, mut lat_out) = (0i32, 0i32);
+    let e = (v.get_latencies)(d.0, &mut lat_in, &mut lat_out);
+    if e != ASE_OK && e != ASE_SUCCESS {
+        (lat_in, lat_out) = (0, 0);
+    }
     if let Some(l) = LIVE.lock().as_mut() {
         l.bufs = bufs;
         l.post_output = post_output;
@@ -686,7 +698,7 @@ unsafe fn start(d: &Driver, info: &AsioInfo, process: Process, outputs: usize, r
         (v.dispose_buffers)(d.0);
         return Err(err);
     }
-    Ok(())
+    Ok((lat_in.max(0) as usize, lat_out.max(0) as usize))
 }
 
 #[cfg(test)]

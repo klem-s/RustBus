@@ -281,7 +281,7 @@ fn start_master(a1: Option<A1>, core: Core, status: &mut EngineStatus, wake: Arc
     let slot = Arc::new(Mutex::new(Some(core)));
     let started = match a1 {
         A1::Asio(a) => {
-            let info = a.info.clone();
+            let mut info = a.info.clone();
             let n_out = info.outputs.len().min(MAX_CH);
             let sh = shared.clone();
             let on_reset: asio::OnReset = Box::new(move |why: &str| {
@@ -291,6 +291,7 @@ fn start_master(a1: Option<A1>, core: Core, status: &mut EngineStatus, wake: Arc
             });
             match a.start(asio_process(slot.clone()), n_out, on_reset) {
                 Ok(s) => {
+                    (info.latency_in, info.latency_out) = s.latencies();
                     status.master = format!("A1: {}", info.driver);
                     status.points[NUM_STRIPS] = Some(format!("ASIO: {} ({} Hz, {n_out} ch, {} samples)", info.driver, info.sample_rate, info.buffer));
                     status.asio = Some(info);
